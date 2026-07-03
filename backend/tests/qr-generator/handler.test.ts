@@ -52,7 +52,7 @@ describe('QR Generator Lambda Handler', () => {
     
     expect(response.statusCode).toBe(200);
     
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body!);
     
     // Validate expiration
     expect(body.expiresIn).toBe(60);
@@ -75,7 +75,7 @@ describe('QR Generator Lambda Handler', () => {
     const response = await handleGenerateQR(event);
     
     expect(response.statusCode).toBe(404);
-    expect(JSON.parse(response.body).message).toBe('Session not found');
+    expect(JSON.parse(response.body!).message).toBe('Session not found');
   });
 
   it('should return 403 if caller is not the owner of the session', async () => {
@@ -97,7 +97,7 @@ describe('QR Generator Lambda Handler', () => {
     const response = await handleGenerateQR(event);
     
     expect(response.statusCode).toBe(403);
-    expect(JSON.parse(response.body).message).toBe('Forbidden: You are not the owner of this session');
+    expect(JSON.parse(response.body!).message).toBe('Forbidden: You are not the owner of this session');
   });
 
   it('should return 400 if the session is closed', async () => {
@@ -119,7 +119,7 @@ describe('QR Generator Lambda Handler', () => {
     const response = await handleGenerateQR(event);
     
     expect(response.statusCode).toBe(400);
-    expect(JSON.parse(response.body).message).toBe('Session is not active');
+    expect(JSON.parse(response.body!).message).toBe('Session is not active');
   });
 
   it('should throw an error if the user is not in TEACHER group', async () => {

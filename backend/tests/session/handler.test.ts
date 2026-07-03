@@ -1,6 +1,8 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { handleCreateSession, handleCloseSession, handleGetSession } from '../../src/functions/session/handler';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { handleCreateSession } from '../../src/functions/session/handlers/create';
+import { handleGetSession } from '../../src/functions/session/handlers/get';
+import { handleDeleteSession } from '../../src/functions/session/handlers/delete';
 import { createMockEvent } from './eventFactory';
 import { SessionStatus } from '../../src/functions/session/types';
 
@@ -24,13 +26,13 @@ describe('Session Lambda Handler', () => {
 
       const response = await handleCreateSession(event);
       
-      expect(response.statusCode).toBe(201);
-      const responseBody = JSON.parse(response.body);
-      expect(responseBody.className).toBe('CS101');
-      expect(responseBody.duration).toBe(90);
-      expect(responseBody.status).toBe(SessionStatus.ACTIVE);
-      expect(responseBody.teacherId).toBe('test-teacher-id');
-      expect(responseBody.sessionId).toBeDefined();
+      expect(response.statusCode).toBe(200);
+      const responseBody = JSON.parse(response.body!);
+      expect(responseBody.session.className).toBe('CS101');
+      expect(responseBody.session.duration).toBe(90);
+      expect(responseBody.session.status).toBe(SessionStatus.ACTIVE);
+      expect(responseBody.session.teacherId).toBe('test-teacher-id');
+      expect(responseBody.session.sessionId).toBeDefined();
     });
 
     it('should return 400 when duration is invalid (Zod validation)', async () => {
@@ -43,7 +45,7 @@ describe('Session Lambda Handler', () => {
       const response = await handleCreateSession(event);
       
       expect(response.statusCode).toBe(400);
-      expect(JSON.parse(response.body).message).toBe('Validation Error');
+      expect(JSON.parse(response.body!).message).toBe('Invalid payload');
     });
 
     it('should throw an error if user is not in TEACHER group', async () => {
@@ -58,7 +60,7 @@ describe('Session Lambda Handler', () => {
     });
   });
 
-  describe('handleCloseSession (PATCH /sessions/{sessionId}/close)', () => {
+  describe('handleDeleteSession (DELETE /sessions/{sessionId})', () => {
     it('should close the session if the caller is the owner', async () => {
       ddbMock.on(GetCommand).resolves({
         Item: {
@@ -67,18 +69,18 @@ describe('Session Lambda Handler', () => {
           status: SessionStatus.ACTIVE,
         }
       });
-      ddbMock.on(UpdateCommand).resolves({});
+      ddbMock.on(DeleteCommand).resolves({});
 
       const event = createMockEvent({
-        method: 'PATCH',
-        path: '/sessions/session-123/close',
+        method: 'DELETE',
+        path: '/sessions/session-123',
         pathParameters: { sessionId: 'session-123' },
       });
 
-      const response = await handleCloseSession(event);
+      const response = await handleDeleteSession(event);
       
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body).message).toBe('Session closed successfully');
+      expect(JSON.parse(response.body!).message).toBe('Session deleted successfully');
     });
 
     it('should return 403 Forbidden if a different teacher tries to close it', async () => {
@@ -91,15 +93,15 @@ describe('Session Lambda Handler', () => {
       });
 
       const event = createMockEvent({
-        method: 'PATCH',
-        path: '/sessions/session-123/close',
+        method: 'DELETE',
+        path: '/sessions/session-123',
         pathParameters: { sessionId: 'session-123' },
       });
 
-      const response = await handleCloseSession(event);
+      const response = await handleDeleteSession(event);
       
       expect(response.statusCode).toBe(403);
-      expect(JSON.parse(response.body).message).toBe('Forbidden: You are not the owner of this session');
+      expect(JSON.parse(response.body!).message).toBe('You do not own this session');
     });
   });
 });

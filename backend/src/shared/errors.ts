@@ -1,0 +1,57 @@
+import { Responses } from './response';
+import { APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import { Logger } from './logger';
+
+export class AppError extends Error {
+  public statusCode: number;
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.statusCode = statusCode;
+    this.name = this.constructor.name;
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+export class UnauthorizedError extends AppError {
+  constructor(message: string = 'Unauthorized') {
+    super(message, 401);
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message: string = 'Forbidden') {
+    super(message, 403);
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message: string = 'Not Found') {
+    super(message, 404);
+  }
+}
+
+export class BadRequestError extends AppError {
+  constructor(message: string = 'Bad Request') {
+    super(message, 400);
+  }
+}
+
+export const errorHandler = (error: any): APIGatewayProxyStructuredResultV2 => {
+  Logger.error('API Error:', error);
+
+  if (error instanceof AppError) {
+    return Responses[error.statusCode === 401 ? 'unauthorized' :
+      error.statusCode === 403 ? 'forbidden' :
+      error.statusCode === 404 ? 'notFound' : 'badRequest'](error.message);
+  }
+
+  // Fallback for some old errors thrown directly
+  if (error.message && error.message.startsWith('Unauthorized')) {
+    return Responses.unauthorized(error.message);
+  }
+  if (error.message && error.message.startsWith('Forbidden')) {
+    return Responses.forbidden(error.message);
+  }
+
+  return Responses.internalError('Internal Server Error');
+};

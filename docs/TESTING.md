@@ -1,8 +1,6 @@
 # Tài liệu Kiểm thử (Testing Documentation)
 
-Dự án này áp dụng phương pháp **Unit Test (Behavior-Driven)** sử dụng **Jest** và **aws-sdk-client-mock** để kiểm thử logic nghiệp vụ (Business Logic) một cách độc lập mà không cần kết nối tới AWS Cloud.
-
-Tính đến hiện tại, các modules sau đã được bao phủ bởi Unit Tests (Passed 10/10):
+Dự án này áp dụng phương pháp **Unit Test (Behavior-Driven)** sử dụng **Jest** và **aws-sdk-client-mock** để kiểm thử logic nghiệp vụ một cách độc lập mà không cần kết nối tới AWS Cloud.
 
 ---
 
@@ -37,6 +35,52 @@ Tính đến hiện tại, các modules sau đã được bao phủ bởi Unit T
   - `[PASS]` Sinh viên (User thuộc nhóm `STUDENT`) gọi API này -> Lập tức chặn ở tầng xác thực, trả về `403 Forbidden`.
 
 ---
+
+## 3. `λ Check-in` (Điểm danh Sinh viên)
+
+### Mục tiêu kiểm thử
+Đảm bảo tính năng cốt lõi hoạt động không có kẽ hở:
+- Ngăn chặn điểm danh hộ bằng mã QR hết hạn hoặc mã giả.
+- Ngăn chặn triệt để mã QR bị tái sử dụng (Cơ chế quét 1 lần - Single-use QR).
+- Chống điểm danh lặp (Double check-in) trong cùng một lớp.
+
+### Kịch bản (Test Cases) đã kiểm thử:
+- **[POST] Điểm danh (`handleCheckin`)**:
+  - `[PASS]` **Happy Path**: Payload hợp lệ, mã QR chính xác. -> Hệ thống ghi nhận điểm danh thành công vào `AttendanceTable`, đồng thời **XÓA MÃ QR** lập tức khỏi `QrTokensTable` và trả về `200 OK`.
+  - `[PASS]` Truyền mã QR không tồn tại, sai, hoặc đã hết hạn TTL -> Trả về lỗi `400 Invalid or expired QR code`.
+  - `[PASS]` Lấy mã QR của lớp Toán để điểm danh cho lớp Văn (Sai `sessionId`) -> Trả về lỗi `400 QR code does not match this session`.
+  - `[PASS]` Sinh viên đã quét QR thành công trước đó, nay cố tình quét lại lần 2 -> Hệ thống chặn ở `checkAttendanceExist` và trả về `409 Conflict`.
+  - `[PASS]` Giảng viên cố tình gọi API check-in -> Trả về lỗi `403 Forbidden: Caller is not a STUDENT`.
+
+---
+
+## 4. `λ Report` (Báo cáo Điểm danh)
+
+### Mục tiêu kiểm thử
+Đảm bảo chỉ có Giảng viên mới được phép xem danh sách sinh viên của lớp do chính họ tạo ra. Tối ưu hóa hiệu năng bằng lệnh `Query`.
+
+### Kịch bản (Test Cases) đã kiểm thử:
+- **[GET] Báo cáo (`handleGetReport`)**:
+  - `[PASS]` **Happy Path**: Payload hợp lệ, session thuộc về Giảng viên -> Hệ thống trả về `200 OK` với danh sách `attendees` và `totalAttendees`.
+  - `[PASS]` Session ID không tồn tại -> Trả về `404 Not Found`.
+  - `[PASS]` Sinh viên cố tình gọi API lấy báo cáo -> Chặn ở tầng xác thực, trả về `403 Forbidden: Caller is not a TEACHER`.
+  - `[PASS]` Giảng viên A cố tình xem báo cáo của lớp do Giảng viên B tạo -> Chặn ở logic kiểm tra sở hữu (Ownership), trả về `403 Forbidden: You do not own this session`.
+
+---
+
+## 5. `λ Auth` & `λ Admin` (Xác thực & Quản trị)
+
+### Mục tiêu kiểm thử
+Đảm bảo luồng tự động cấp quyền STUDENT khi đăng ký tài khoản mới và hệ thống APIs Quản trị hoạt động nghiêm ngặt, cấm truy cập trái phép.
+
+### Kịch bản (Test Cases) đã kiểm thử:
+- **`λ Auth` (PostConfirmation Trigger)**:
+  - `[PASS]` Người dùng đăng ký thành công -> Hệ thống tự động gọi lệnh `adminAddUserToGroup` nhét vào group `STUDENT`.
+- **`λ Admin` (Admin APIs)**:
+  - `[PASS]` Giảng viên/Sinh viên cố tình gọi API `/admin/users` -> Hệ thống trả về `403 Forbidden: Caller is not an ADMIN`.
+  - `[PASS]` **[GET] `/admin/users`**: Lấy danh sách toàn bộ người dùng trong Cognito User Pool.
+  - `[PASS]` **[POST] `/admin/assign-teacher`**: Gọi lệnh `adminAddUserToGroup` cấp quyền `TEACHER` thành công.
+  - `[PASS]` **[POST] `/admin/revoke-teacher`**: Gọi lệnh `adminRemoveUserFromGroup` tước quyền `TEACHER` thành công.
 
 
 > Để chạy bộ test này, chỉ cần mở terminal tại thư mục `backend` và chạy lệnh `npm test`. Tốc độ kiểm thử dưới 1 giây.

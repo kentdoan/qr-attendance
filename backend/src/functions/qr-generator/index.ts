@@ -1,3 +1,6 @@
+import { Logger } from '../../shared/logger';
+import { errorHandler } from '../../shared/errors';
+import { Responses } from '../../shared/response';
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { handleGenerateQR } from './handler';
 
@@ -12,23 +15,8 @@ export const handler = async (
       return await handleGenerateQR(event);
     }
 
-    return {
-      statusCode: 404,
-      body: JSON.stringify({ message: 'Route Not Found' }),
-    };
+    return Responses.notFound('Route Not Found');
   } catch (error: any) {
-    console.error('Error in QrGeneratorFunction:', error);
-    
-    if (error.message.startsWith('Unauthorized') || error.message.startsWith('Forbidden')) {
-      return {
-        statusCode: 403,
-        body: JSON.stringify({ message: error.message }),
-      };
-    }
-
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: 'Internal Server Error' }),
-    };
+    return errorHandler(error);
   }
 };
