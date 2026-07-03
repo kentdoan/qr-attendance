@@ -1,7 +1,6 @@
 # Smart QR Attendance — Developer Guide
 
 Hệ thống điểm danh bằng QR Code động xây dựng trên AWS Serverless.  
-Xem tài liệu yêu cầu tại [`REQUIREMENTS.md`](./docs/REQUIREMENTS.md) và thiết kế kỹ thuật tại [`DESIGN.md`](./docs/DESIGN.md).
 
 ---
 
