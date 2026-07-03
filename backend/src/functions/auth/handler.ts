@@ -1,5 +1,5 @@
 import { Logger } from '../../shared/logger';
-import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminUpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { PostConfirmationEvent } from './types';
 
 const cognitoClient = new CognitoIdentityProviderClient({});
@@ -17,7 +17,21 @@ export const handlePostConfirmation = async (event: PostConfirmationEvent): Prom
     });
 
     await cognitoClient.send(command);
-    Logger.info(`Successfully added user ${userName} to STUDENT group`);
+
+    const updateAttrCommand = new AdminUpdateUserAttributesCommand({
+      UserPoolId: userPoolId,
+      Username: userName,
+      UserAttributes: [
+        {
+          Name: 'custom:role',
+          Value: 'STUDENT',
+        },
+      ],
+    });
+
+    await cognitoClient.send(updateAttrCommand);
+
+    Logger.info(`Successfully added user ${userName} to STUDENT group and updated role attribute`);
 
   } catch (error) {
     Logger.error('Error adding user to group:', error);

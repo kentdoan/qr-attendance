@@ -1,5 +1,5 @@
 import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
-import { CognitoIdentityProviderClient, AdminRemoveUserFromGroupCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { CognitoIdentityProviderClient, AdminRemoveUserFromGroupCommand, AdminUpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { requireAdmin } from '../../../shared/permissions';
 import { Responses } from '../../../shared/response';
 import { RoleAssignmentSchema } from '../types';
@@ -24,5 +24,18 @@ export const handleRevokeTeacher = async (event: APIGatewayProxyEventV2WithJWTAu
   });
 
   await cognitoClient.send(command);
+
+  const updateAttrCommand = new AdminUpdateUserAttributesCommand({
+    UserPoolId: poolId,
+    Username: parsed.data.username,
+    UserAttributes: [
+      {
+        Name: 'custom:role',
+        Value: 'STUDENT',
+      },
+    ],
+  });
+
+  await cognitoClient.send(updateAttrCommand);
   return Responses.success({ message: `Successfully revoked TEACHER role from ${parsed.data.username}` });
 };
