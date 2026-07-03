@@ -124,6 +124,14 @@ Resources:
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - "*"
+        MaxAge: 3600
       Auth:
         DefaultAuthorizer: CognitoAuthorizer
         Authorizers:
