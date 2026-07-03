@@ -25,9 +25,9 @@
 |----|----------|-------|----------------------|---------|-------------|
 | UC-T01 | Đăng ký tài khoản | Giảng viên tạo tài khoản mới | Chưa có tài khoản | Tài khoản tạo với quyền `STUDENT`; Admin nâng lên `TEACHER` | FR-01, FR-03 |
 | UC-T02 | Đăng nhập | Giảng viên đăng nhập bằng email + mật khẩu | Đã có tài khoản `TEACHER` | Nhận JWT token | FR-02 |
-| UC-T03 | Tạo phiên điểm danh | Giảng viên tạo session mới (có thể đặt hẹn giờ tự động đóng) | Đã đăng nhập (TEACHER) | Nhận `sessionId`, trạng thái `OPEN` | FR-04, FR-12 |
-| UC-T04 | Lấy QR Code | Giảng viên lấy QR Code mới nhất để chiếu lên bảng | Session đang `OPEN` | Nhận token ngắn hạn (30–60s) | FR-05 |
-| UC-T05 | Đóng phiên điểm danh | Giảng viên kết thúc buổi điểm danh | Session đang `OPEN` | Session chuyển `CLOSED`, dừng sinh QR | FR-04 |
+| UC-T03 | Tạo phiên điểm danh | Giảng viên tạo session mới (có thể đặt hẹn giờ tự động đóng) | Đã đăng nhập (TEACHER) | Nhận `sessionId`, trạng thái `ACTIVE` | FR-04, FR-12 |
+| UC-T04 | Lấy QR Code | Giảng viên lấy QR Code mới nhất để chiếu lên bảng | Session đang `ACTIVE` | Nhận token ngắn hạn (30–60s) | FR-05 |
+| UC-T05 | Đóng phiên điểm danh | Giảng viên kết thúc buổi điểm danh | Session đang `ACTIVE` | Session chuyển `CLOSED`, dừng sinh QR | FR-04 |
 | UC-T06 | Xem danh sách điểm danh | Giảng viên xem ai đã điểm danh trong session | Session đã tồn tại | Danh sách sinh viên kèm thời gian | FR-09 |
 | UC-T07 | Xuất báo cáo | Giảng viên xem báo cáo theo lớp / ngày | Đã có dữ liệu điểm danh | Báo cáo tổng hợp | FR-09 |
 | UC-T08 | Xóa phiên điểm danh | Giảng viên xóa session tạo nhầm | Session đã tồn tại | Session và dữ liệu điểm danh bị xóa | FR-04 |
@@ -73,7 +73,7 @@ graph LR
 |----|----------|-------|----------------------|---------|-------------|
 | UC-S01 | Đăng ký tài khoản | Sinh viên tạo tài khoản mới | Chưa có tài khoản | Tài khoản được tạo với quyền `STUDENT` | FR-01, FR-03 |
 | UC-S02 | Đăng nhập | Sinh viên đăng nhập bằng email + mật khẩu | Đã có tài khoản | Nhận JWT token | FR-02 |
-| UC-S03 | Quét QR và điểm danh | Sinh viên quét QR Code đang chiếu → hệ thống gửi token lên API | Đã đăng nhập, session `OPEN`, token hợp lệ | Điểm danh thành công | FR-07, FR-06, FR-08 |
+| UC-S03 | Quét QR và điểm danh | Sinh viên quét QR Code đang chiếu → hệ thống gửi token lên API | Đã đăng nhập, session `ACTIVE`, token hợp lệ | Điểm danh thành công | FR-07, FR-06, FR-08 |
 | UC-S04 | Xem lịch sử điểm danh | Sinh viên xem các buổi mình đã điểm danh | Đã đăng nhập | Danh sách lịch sử cá nhân | FR-09 |
 
 #### Use Case Diagram — Sinh viên
@@ -162,7 +162,7 @@ sequenceDiagram
     User->>FE: Nhập mã xác nhận
     FE->>Cognito: ConfirmSignUp(email, code)
     Cognito->>Auth: Post Confirmation Trigger
-    Auth->>Cognito: AdminAddUserToGroup(userId, "STUDENT")
+    Auth->>Cognito: AdminAddUserToGroup(username, "STUDENT")
     Cognito-->>Auth: OK
     Cognito-->>FE: Xác nhận tài khoản thành công
     FE-->>User: Đăng ký thành công, mời đăng nhập
@@ -203,17 +203,17 @@ sequenceDiagram
     participant TokenDB as DynamoDB (QrTokens)
 
     GV->>FE: Điền thông tin buổi học (tùy chọn hẹn giờ), nhấn "Tạo phiên"
-    FE->>APIGW: POST /sessions { classId, durationMinutes } (Bearer)
+    FE->>APIGW: POST /sessions { className, duration } (Bearer)
     APIGW->>APIGW: Xác thực JWT (Cognito Authorizer, yêu cầu nhóm TEACHER)
     APIGW->>Session: Invoke Lambda
-    Session->>SessionDB: PutItem { sessionId, classId, teacherId, status: OPEN, expiresAt }
+    Session->>SessionDB: PutItem { sessionId, className, teacherId, status: ACTIVE, expiresAt }
     SessionDB-->>Session: OK
     Session-->>APIGW: 201 { sessionId }
     APIGW-->>FE: 201 { sessionId }
     FE-->>GV: Chuyển sang màn hình hiển thị QR Code
 
     Note over FE: Frontend tự động gọi lại mỗi 30 giây để cập nhật QR mới
-    loop Mỗi 30 giây (trong khi session OPEN)
+    loop Mỗi 30 giây (trong khi session ACTIVE)
         FE->>APIGW: GET /sessions/{sessionId}/qr (Bearer jwtToken)
         APIGW->>QRGen: Invoke Lambda
         QRGen->>QRGen: token = HMAC(sessionId + timestamp + secretKey)
@@ -262,7 +262,7 @@ sequenceDiagram
             APP-->>SV: Phiên điểm danh đã kết thúc
             
         else Phiên đang mở
-            SessionDB-->>Checkin: Item { status: OPEN }
+            SessionDB-->>Checkin: Item { status: ACTIVE }
             Checkin->>AttendDB: GetItem { sessionId, studentId }
 
             alt Đã điểm danh rồi
@@ -327,7 +327,7 @@ sequenceDiagram
     participant Cognito as Amazon Cognito
 
     Admin->>FE: Chọn tài khoản, nhấn "Cấp quyền Giảng viên"
-    FE->>APIGW: POST /admin/assign-teacher { userId } (Bearer jwtToken)
+    FE->>APIGW: POST /admin/assign-teacher { username } (Bearer jwtToken)
     APIGW->>APIGW: Xác thực JWT (chỉ cho phép nhóm ADMIN)
 
     alt Không phải Admin
@@ -335,9 +335,9 @@ sequenceDiagram
         FE-->>Admin: Không có quyền thực hiện thao tác này
     else Là Admin
         APIGW->>AdminFn: Invoke Lambda
-        AdminFn->>Cognito: AdminAddUserToGroup(userId, "TEACHER")
+        AdminFn->>Cognito: AdminAddUserToGroup(username, "TEACHER")
         Cognito-->>AdminFn: OK
-        AdminFn->>Cognito: AdminRemoveUserFromGroup(userId, "STUDENT")
+        AdminFn->>Cognito: AdminRemoveUserFromGroup(username, "STUDENT")
         Cognito-->>AdminFn: OK
         AdminFn-->>APIGW: 200 Cập nhật quyền thành công
         APIGW-->>FE: 200

@@ -15,20 +15,19 @@
 ## 2. Session API (`λ Session`)
 
 ### `POST /sessions` — Tạo phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER`)
+- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
 - **Request Body**:
   ```json
   {
-    "classId": "string",
-    "startTime": "ISO 8601 string",
-    "durationMinutes": 15 // (Optional) Thời gian hẹn giờ đóng phiên
+    "className": "string",
+    "duration": 60
   }
   ```
 - **Response `201`**:
   ```json
   { "sessionId": "uuid" }
   ```
-- **Errors**: `401` (chưa đăng nhập), `403` (không phải TEACHER)
+- **Errors**: `401` (chưa đăng nhập), `403` (không có quyền)
 
 ### `GET /sessions/{sessionId}` — Lấy thông tin session
 - **Auth**: Bearer JWT
@@ -36,29 +35,29 @@
   ```json
   {
     "sessionId": "uuid",
-    "classId": "string",
     "teacherId": "string",
-    "status": "OPEN | CLOSED",
-    "startTime": "ISO 8601",
-    "endTime": "ISO 8601 | null",
-    "expiresAt": "Unix timestamp | null"
+    "className": "string",
+    "status": "ACTIVE | CLOSED",
+    "createdAt": "ISO 8601",
+    "expiresAt": "ISO 8601",
+    "duration": 60
   }
   ```
 - **Errors**: `404` (không tìm thấy)
 
 ### `PATCH /sessions/{sessionId}/close` — Đóng phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER`, chỉ teacher sở hữu session)
+- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`, chỉ teacher sở hữu session)
 - **Response `200`**:
   ```json
-  { "message": "Session closed" }
+  { "message": "Session closed successfully" }
   ```
 - **Errors**: `403` (không phải chủ sở hữu session), `404`, `400` (đã CLOSED rồi)
 
 ### `DELETE /sessions/{sessionId}` — Xóa phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER`, chỉ teacher sở hữu session)
+- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`, chỉ teacher sở hữu session)
 - **Response `200`**:
   ```json
-  { "message": "Session deleted" }
+  { "message": "Session deleted successfully" }
   ```
 
 ---
@@ -66,7 +65,7 @@
 ## 3. QR Generator API (`λ QR Generator`)
 
 ### `GET /sessions/{sessionId}/qr` — Lấy QR token mới
-- **Auth**: Bearer JWT (nhóm `TEACHER`)
+- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
 - **Response `200`**:
   ```json
   {
@@ -84,28 +83,31 @@
 - **Auth**: Bearer JWT (nhóm `STUDENT`)
 - **Request Body**:
   ```json
-  { "token": "string" }
+  { 
+    "token": "string",
+    "sessionId": "string",
+    "deviceFingerprint": "string"
+  }
   ```
 - **Response `200`**:
   ```json
-  { "message": "Check-in thành công", "checkinTime": "ISO 8601" }
+  { "message": "Check-in successful" }
   ```
 - **Errors**:
 
 | HTTP Status | Error Code | Nguyên nhân |
 |-------------|-----------|-------------|
-| `403` | `INVALID_TOKEN` | Token không tồn tại hoặc giả mạo |
-| `403` | `TOKEN_EXPIRED` | Token đã quá TTL |
-| `409` | `ALREADY_CHECKED_IN` | Sinh viên đã điểm danh session này |
-| `400` | `SESSION_CLOSED` | Session đã đóng (status CLOSED) |
-| `400` | `SESSION_EXPIRED` | Session đã quá thời gian hẹn giờ đóng (`expiresAt`) |
+| `400` | `invalid_type` | Thiếu token, sessionId hoặc deviceFingerprint |
+| `400` | `INVALID_TOKEN` | Token không tồn tại, hết hạn hoặc không khớp Session |
+| `400` | `SESSION_CLOSED` | Session đã bị đóng (CLOSED) hoặc quá giờ (ACTIVE nhưng hết hạn) |
+| `400` | `ALREADY_CHECKED_IN` | Sinh viên đã điểm danh session này rồi |
 
 ---
 
 ## 5. Report API (`λ Report`)
 
 ### `GET /sessions/{sessionId}/report` — Xem báo cáo điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER`)
+- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
 - **Response `200`**:
   ```json
   {
@@ -114,7 +116,7 @@
     "attendees": [
       {
         "studentId": "string",
-        "checkinTime": "ISO 8601",
+        "checkinTime": 1719543200,
         "deviceFingerprint": "string"
       }
     ]
@@ -131,7 +133,7 @@
   ```json
   {
     "users": [
-      { "userId": "string", "email": "string", "name": "string", "role": "TEACHER | STUDENT" }
+      { "username": "string", "email": "string", "role": "string", "status": "string", "createdAt": "ISO 8601" }
     ]
   }
   ```
@@ -140,20 +142,20 @@
 - **Auth**: Bearer JWT (nhóm `ADMIN`)
 - **Request Body**:
   ```json
-  { "userId": "string" }
+  { "username": "string" }
   ```
 - **Response `200`**:
   ```json
-  { "message": "Cập nhật quyền thành công" }
+  { "message": "Role TEACHER assigned to user string" }
   ```
 
 ### `POST /admin/revoke-teacher` — Thu hồi quyền Giảng viên
 - **Auth**: Bearer JWT (nhóm `ADMIN`)
 - **Request Body**:
   ```json
-  { "userId": "string" }
+  { "username": "string" }
   ```
 - **Response `200`**:
   ```json
-  { "message": "Thu hồi quyền thành công" }
+  { "message": "Role TEACHER revoked from user string" }
   ```

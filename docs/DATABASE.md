@@ -15,12 +15,12 @@
 | Attribute | Type | Ghi chú |
 |-----------|------|---------|
 | `sessionId` | String (PK) | UUID v4 |
-| `classId` | String | Mã lớp học |
+| `className` | String | Tên lớp học |
 | `teacherId` | String | Sub (ID) của giảng viên trong Cognito |
-| `status` | String | `OPEN` hoặc `CLOSED` |
-| `startTime` | Number | Unix timestamp (ms) |
-| `endTime` | Number | Unix timestamp (ms), null khi chưa đóng thủ công |
-| `expiresAt` | Number | Unix timestamp (giây). Dùng nếu có hẹn giờ (`durationMinutes`) |
+| `status` | String | `ACTIVE` hoặc `CLOSED` |
+| `createdAt` | String | ISO 8601 string |
+| `duration` | Number | Thời gian hiệu lực tính bằng phút |
+| `expiresAt` | String | ISO 8601 string. Hết hạn = `createdAt` + `duration` |
 
 ### 2.2 QrTokens Table
 
@@ -28,7 +28,7 @@
 |-----------|------|---------|
 | `token` | String (PK) | HMAC-SHA256 string |
 | `sessionId` | String | Tham chiếu đến session |
-| `ttl` | Number | Unix timestamp (giây) — DynamoDB TTL field, tự xóa khi hết hạn |
+| `expiresAt` | Number | Unix timestamp (giây) — DynamoDB TTL field, tự xóa khi hết hạn |
 
 ### 2.3 Attendance Table
 
@@ -37,4 +37,4 @@
 | `sessionId` | String (PK) | Partition key |
 | `studentId` | String (SK) | Sort key — kết hợp PK+SK đảm bảo unique per session |
 | `checkinTime` | Number | Unix timestamp (ms) |
-| `deviceFingerprint` | String | User-Agent + IP hash |
+| `deviceFingerprint` | String | Identifier thiết bị của user |
