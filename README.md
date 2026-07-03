@@ -48,6 +48,7 @@ npm install -g typescript
 # Clone repo
 git clone <repo-url>
 cd serverless-qr-attendance
+cd backend
 
 # Cài dependencies
 npm install
