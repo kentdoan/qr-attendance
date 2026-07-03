@@ -22,9 +22,8 @@ createSession:
 
 closeSession:
   1. Đọc teacherId từ JWT
-  2. GetItem session → kiểm tra tồn tại + status ACTIVE + teacherId khớp
-  3. Gọi repository.closeSession(sessionId) -> update status = CLOSED
-  4. Return 200
+  2. Gọi lệnh DynamoDB UpdateCommand để set status = 'CLOSED' với điều kiện `teacherId = :teacherId`
+  3. Return 200 (Thành công) hoặc 403 (Không có quyền sở hữu / Không tồn tại)
 ```
 
 ## `λ QR Generator`
