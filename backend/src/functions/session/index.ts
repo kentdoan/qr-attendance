@@ -3,6 +3,7 @@ import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResul
 import { handleCreateSession } from './handlers/create';
 import { handleGetSession } from './handlers/get';
 import { handleDeleteSession } from './handlers/delete';
+import { handleCloseSession } from './handlers/close';
 import { Responses } from '../../shared/response';
 
 export const handler = async (
@@ -22,6 +23,10 @@ export const handler = async (
 
     if (method === 'DELETE' && path.match(/^\/sessions\/[a-zA-Z0-9-]+$/)) {
       return await handleDeleteSession(event);
+    }
+
+    if (method === 'PATCH' && path.match(/^\/sessions\/[a-zA-Z0-9-]+\/close$/)) {
+      return await handleCloseSession(event);
     }
 
     return Responses.notFound('Route Not Found');
