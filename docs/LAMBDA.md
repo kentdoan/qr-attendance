@@ -20,10 +20,22 @@ createSession:
   4. Gọi repository.createSession(sessionId, className, teacherId, createdAt, expiresAt, duration)
   5. Return 201 { sessionId }
 
+getSession:
+  1. Đọc teacherId từ JWT
+  2. Gọi repository.getSession(sessionId)
+  3. Kiểm tra session tồn tại và session.teacherId == teacherId
+  4. Return 200 { session } hoặc 403 / 404
+
 closeSession:
   1. Đọc teacherId từ JWT
   2. Gọi lệnh DynamoDB UpdateCommand để set status = 'CLOSED' với điều kiện `teacherId = :teacherId`
   3. Return 200 (Thành công) hoặc 403 (Không có quyền sở hữu / Không tồn tại)
+
+deleteSession:
+  1. Đọc teacherId từ JWT
+  2. Gọi repository.getSession(sessionId) để kiểm tra tồn tại và quyền sở hữu
+  3. Gọi repository.deleteSession(sessionId)
+  4. Return 200 (Xóa thành công)
 ```
 
 ## `λ QR Generator`
@@ -67,6 +79,12 @@ getReport:
 ## `λ Admin`
 
 ```
+listUsers:
+  1. Kiểm tra caller thuộc nhóm ADMIN
+  2. Gọi lệnh Cognito ListUsersCommand để lấy danh sách người dùng trong hệ thống
+  3. Lọc và chuẩn hóa dữ liệu (username, status, attributes)
+  4. Return 200 { users }
+
 assignTeacher:
   1. Kiểm tra caller thuộc nhóm ADMIN
   2. Cognito AdminAddUserToGroup(username, "TEACHER")
