@@ -89,6 +89,10 @@ Resources:
           RequireNumbers: true
           RequireSymbols: false
           RequireUppercase: true
+      Schema:
+        - Name: role
+          AttributeDataType: String
+          Mutable: true
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -157,6 +161,7 @@ Resources:
             - Effect: Allow
               Action:
                 - cognito-idp:AdminAddUserToGroup
+                - cognito-idp:AdminUpdateUserAttributes
               Resource: "*"
       Events:
         PostConfirmation:
@@ -319,6 +324,7 @@ Resources:
               Action:
                 - cognito-idp:AdminAddUserToGroup
                 - cognito-idp:AdminRemoveUserFromGroup
+                - cognito-idp:AdminUpdateUserAttributes
                 - cognito-idp:ListUsers
               Resource: !GetAtt UserPool.Arn
       Events:
