@@ -36,21 +36,20 @@ export class BadRequestError extends AppError {
   }
 }
 
+export class ConflictError extends AppError {
+  constructor(message: string = 'Conflict') {
+    super(message, 409);
+  }
+}
+
 export const errorHandler = (error: any): APIGatewayProxyStructuredResultV2 => {
   Logger.error('API Error:', error);
 
   if (error instanceof AppError) {
     return Responses[error.statusCode === 401 ? 'unauthorized' :
       error.statusCode === 403 ? 'forbidden' :
-      error.statusCode === 404 ? 'notFound' : 'badRequest'](error.message);
-  }
-
-  // Fallback for some old errors thrown directly
-  if (error.message && error.message.startsWith('Unauthorized')) {
-    return Responses.unauthorized(error.message);
-  }
-  if (error.message && error.message.startsWith('Forbidden')) {
-    return Responses.forbidden(error.message);
+      error.statusCode === 404 ? 'notFound' :
+      error.statusCode === 409 ? 'conflict' : 'badRequest'](error.message);
   }
 
   return Responses.internalError('Internal Server Error');

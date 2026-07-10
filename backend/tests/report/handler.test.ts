@@ -1,6 +1,6 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { handleGetReport } from '../../src/functions/report/handler';
+import { handleGetReport } from '../../src/handlers/reportHandler';
 import { createMockEvent } from '../session/eventFactory';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
@@ -10,6 +10,7 @@ describe('Report Lambda Handler', () => {
     ddbMock.reset();
     process.env.SESSIONS_TABLE = 'SessionsTable';
     process.env.ATTENDANCE_TABLE = 'AttendanceTable';
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {

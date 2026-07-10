@@ -5,8 +5,9 @@
 ```
 Input: CognitoUserPoolTriggerEvent (post confirmation)
 Logic:
-  1. Đọc userId và email từ event.userName / event.request.userAttributes
+  1. Đọc userId từ event.userName, userPoolId từ event.userPoolId
   2. Gọi Cognito AdminAddUserToGroup(userId, "STUDENT")
+  3. Gọi Cognito AdminUpdateUserAttributes để cập nhật custom:role = "STUDENT"
 Output: Trả về event (Cognito trigger yêu cầu)
 ```
 
@@ -14,86 +15,91 @@ Output: Trả về event (Cognito trigger yêu cầu)
 
 ```
 createSession:
-  1. Đọc teacherId từ JWT (event.requestContext.authorizer.claims.sub)
-  2. Validate: className và duration
-  3. Tính toán `expiresAt`: `expiresAt = (createdAt + duration * 60 * 1000) in ISO string`
-  4. Gọi repository.createSession(sessionId, className, teacherId, createdAt, expiresAt, duration)
-  5. Return 201 { sessionId }
+  1. Handler: Đọc teacherId từ JWT bằng getTeacherId(), validate body bằng Zod
+  2. Service: Tính toán expiresAt = createdAt + duration * 60000 (ms), tạo UUID sessionId
+  3. Repository: PutItem vào SessionsTable
+  4. Return 200 { session }
 
 getSession:
-  1. Đọc teacherId từ JWT
-  2. Gọi repository.getSession(sessionId)
-  3. Kiểm tra session tồn tại và session.teacherId == teacherId
-  4. Return 200 { session } hoặc 403 / 404
+  1. Handler: Đọc teacherId từ JWT, lấy sessionId từ pathParameters
+  2. Service: validateSessionOwnership() → GetItem, kiểm tra tồn tại (NotFoundError) và quyền sở hữu (ForbiddenError)
+  3. Return 200 { session } hoặc 403 / 404
 
 closeSession:
-  1. Đọc teacherId từ JWT
-  2. Gọi lệnh DynamoDB UpdateCommand để set status = 'CLOSED' với điều kiện `teacherId = :teacherId`
-  3. Return 200 (Thành công) hoặc 403 (Không có quyền sở hữu / Không tồn tại)
+  1. Handler: Đọc teacherId từ JWT, lấy sessionId từ pathParameters
+  2. Service: validateSessionOwnership() → xác minh quyền sở hữu
+  3. Repository: UpdateCommand set status = 'CLOSED'
+  4. Return 200 hoặc 403 / 404
 
 deleteSession:
-  1. Đọc teacherId từ JWT
-  2. Gọi repository.getSession(sessionId) để kiểm tra tồn tại và quyền sở hữu
-  3. Gọi repository.deleteSession(sessionId)
-  4. Return 200 (Xóa thành công)
+  1. Handler: Đọc teacherId từ JWT, lấy sessionId từ pathParameters
+  2. Service: validateSessionOwnership() → xác minh quyền sở hữu
+  3. Repository: DeleteCommand
+  4. Return 200 hoặc 403 / 404
 ```
 
 ## `λ QR Generator`
 
 ```
 generateQR:
-  1. Đọc teacherId từ JWT, kiểm tra nhóm TEACHER hoặc ADMIN
-  2. GetItem session → kiểm tra status ACTIVE
-  3. Tạo token = HMAC-SHA256(sessionId + currentTimestamp + secretKey)
-  4. PutItem { token, sessionId, expiresAt: now_in_seconds + 60 }
-  5. Return 200 { token, expiresIn: 60 }
+  1. Handler: Đọc teacherId từ JWT bằng getTeacherId()
+  2. Service: GetItem session → NotFoundError nếu không tồn tại
+  3. Service: Kiểm tra teacherId khớp → ForbiddenError nếu không phải chủ sở hữu
+  4. Service: Kiểm tra session.status === SessionStatus.ACTIVE → BadRequestError nếu đã đóng
+  5. Repository: Lấy HMAC secret từ Secrets Manager (cache in-memory sau lần đầu)
+  6. Service: Tạo token = HMAC-SHA256(sessionId + currentTimestamp, secretKey)
+  7. Repository: PutItem { token, sessionId, expiresAt: now_in_seconds + 60 } (DynamoDB TTL)
+  8. Return 200 { token, expiresIn: 60 }
 ```
 
 ## `λ Check-in`
 
 ```
 checkin:
-  1. Đọc studentId từ JWT (claims.sub)
-  2. GetItem QrTokens { token }
-     → null: return 400 INVALID_TOKEN
-     → expiresAt đã quá: return 400 INVALID_TOKEN
-  3. GetItem Session { sessionId } (từ request payload)
-     → status == CLOSED: return 400 SESSION_CLOSED
-     → expiresAt != null && now > expiresAt: return 400 SESSION_CLOSED
-  4. GetItem Attendance { sessionId, studentId }
-     → tồn tại: return 400 ALREADY_CHECKED_IN
-  5. PutItem Attendance { sessionId, studentId, checkinTime, deviceFingerprint }
-  6. Return 200
+  1. Handler: Đọc studentId từ JWT bằng getStudentId(), validate body bằng Zod (CheckinSchema)
+  2. Service: GetItem QrTokens { token }
+     → null: throw BadRequestError (400 INVALID_TOKEN)
+  3. Service: Kiểm tra qrToken.sessionId === payload.sessionId
+     → không khớp: throw BadRequestError (400 MISMATCH)
+  4. Service: GetItem Attendance { sessionId, studentId }
+     → tồn tại: throw ConflictError (409 ALREADY_CHECKED_IN)
+  5. Service: PutItem Attendance { sessionId, studentId, checkinTime, deviceFingerprint }
+  6. Service: DeleteItem QrToken (single-use — xóa ngay sau khi dùng)
+  7. Return 200 { attendance }
 ```
 
 ## `λ Report`
 
 ```
 getReport:
-  1. Đọc teacherId từ JWT, kiểm tra nhóm TEACHER hoặc ADMIN
-  2. GetItem session → kiểm tra teacherId khớp
-  3. Query Attendance { PK = sessionId }
-  4. Return 200 { total: count, attendees: [...] }
+  1. Handler: Đọc teacherId từ JWT bằng getTeacherId()
+  2. Service: GetItem session để lấy teacherId chủ sở hữu
+     → null: throw NotFoundError (404)
+     → session.teacherId !== teacherId: throw ForbiddenError (403)
+  3. Repository: Query Attendance { PK = sessionId }
+  4. Return 200 { sessionId, totalAttendees: count, attendees: [...] }
 ```
 
 ## `λ Admin`
 
 ```
 listUsers:
-  1. Kiểm tra caller thuộc nhóm ADMIN
-  2. Gọi lệnh Cognito ListUsersCommand để lấy danh sách người dùng trong hệ thống
-  3. Lọc và chuẩn hóa dữ liệu (username, status, attributes)
+  1. Handler: requireAdmin() kiểm tra caller thuộc nhóm ADMIN
+  2. Service: Gọi Cognito ListUsersCommand (Limit: 50)
+  3. Service: Map và chuẩn hóa dữ liệu (username, status, attributes, created)
   4. Return 200 { users }
 
 assignTeacher:
-  1. Kiểm tra caller thuộc nhóm ADMIN
-  2. Cognito AdminAddUserToGroup(username, "TEACHER")
-  3. Return 200
+  1. Handler: requireAdmin() kiểm tra caller thuộc nhóm ADMIN, validate body bằng Zod
+  2. Service: Cognito AdminAddUserToGroup(username, "TEACHER")
+  3. Service: Cognito AdminUpdateUserAttributes set custom:role = "TEACHER"
+  4. Return 200
 
 revokeTeacher:
-  1. Kiểm tra caller thuộc nhóm ADMIN
-  2. Cognito AdminRemoveUserFromGroup(username, "TEACHER")
-  3. Return 200
+  1. Handler: requireAdmin() kiểm tra caller thuộc nhóm ADMIN, validate body bằng Zod
+  2. Service: Cognito AdminRemoveUserFromGroup(username, "TEACHER")
+  3. Service: Cognito AdminUpdateUserAttributes set custom:role = "STUDENT"
+  4. Return 200
 ```
 
 ---

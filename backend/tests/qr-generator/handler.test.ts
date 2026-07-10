@@ -1,9 +1,9 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
-import { handleGenerateQR } from '../../src/functions/qr-generator/handler';
+import { handleGenerateQR } from '../../src/handlers/qrGeneratorHandler';
 import { createMockEvent } from '../session/eventFactory';
-import { SessionStatus } from '../../src/functions/session/types';
+import { SessionStatus } from '../../src/shared/models';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 const secretsMock = mockClient(SecretsManagerClient);
@@ -122,7 +122,7 @@ describe('QR Generator Lambda Handler', () => {
     expect(JSON.parse(response.body!).message).toBe('Session is not active');
   });
 
-  it('should throw an error if the user is not in TEACHER group', async () => {
+  it('should return 403 if the user is not in TEACHER group', async () => {
     const event = createMockEvent({
       method: 'GET',
       path: '/sessions/session-123/qr',
@@ -130,6 +130,8 @@ describe('QR Generator Lambda Handler', () => {
       groups: ['STUDENT'], // Calling as student
     });
 
-    await expect(handleGenerateQR(event)).rejects.toThrow('Forbidden: Caller is not a TEACHER');
+    const response = await handleGenerateQR(event);
+    expect(response.statusCode).toBe(403);
+    expect(JSON.parse(response.body!).message).toBe('Forbidden: Caller is not a TEACHER');
   });
 });

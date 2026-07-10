@@ -1,0 +1,46 @@
+import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
+import { requireAdmin } from '../shared/permissions';
+import { Responses } from '../shared/response';
+import { errorHandler } from '../shared/errors';
+import { RoleAssignmentSchema } from '../shared/schemas';
+import * as adminService from '../services/adminService';
+
+export const handleAssignTeacher = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    requireAdmin(event);
+    if (!event.body) return Responses.badRequest("Missing body");
+
+    const parsed = RoleAssignmentSchema.safeParse(JSON.parse(event.body));
+    if (!parsed.success) return Responses.badRequest("Invalid payload", parsed.error.errors);
+
+    await adminService.assignTeacher(parsed.data.username);
+    return Responses.success({ message: `Successfully assigned TEACHER role to ${parsed.data.username}` });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};
+
+export const handleRevokeTeacher = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    requireAdmin(event);
+    if (!event.body) return Responses.badRequest("Missing body");
+
+    const parsed = RoleAssignmentSchema.safeParse(JSON.parse(event.body));
+    if (!parsed.success) return Responses.badRequest("Invalid payload", parsed.error.errors);
+
+    await adminService.revokeTeacher(parsed.data.username);
+    return Responses.success({ message: `Successfully revoked TEACHER role from ${parsed.data.username}` });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};
+
+export const handleListUsers = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    requireAdmin(event);
+    const users = await adminService.listUsers();
+    return Responses.success({ users });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};

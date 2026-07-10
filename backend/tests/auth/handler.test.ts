@@ -1,7 +1,7 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { handlePostConfirmation } from '../../src/functions/auth/handler';
-import { PostConfirmationEvent } from '../../src/functions/auth/types';
+import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminUpdateUserAttributesCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { handlePostConfirmation } from '../../src/handlers/authHandler';
+import { PostConfirmationEvent } from '../../src/shared/models';
 
 const cognitoMock = mockClient(CognitoIdentityProviderClient);
 
@@ -16,6 +16,7 @@ describe('Auth PostConfirmation Lambda', () => {
 
   it('should add new user to STUDENT group and return event', async () => {
     cognitoMock.on(AdminAddUserToGroupCommand).resolves({});
+    cognitoMock.on(AdminUpdateUserAttributesCommand).resolves({});
 
     const mockEvent: PostConfirmationEvent = {
       version: '1',
@@ -29,7 +30,7 @@ describe('Auth PostConfirmation Lambda', () => {
 
     const response = await handlePostConfirmation(mockEvent);
 
-    expect(cognitoMock.calls().length).toBe(1);
+    expect(cognitoMock.calls().length).toBe(2); // AddUserToGroup + UpdateUserAttributes
     const command = cognitoMock.calls()[0].args[0].input as any;
     expect(command.UserPoolId).toBe('pool-123');
     expect(command.Username).toBe('new-user');

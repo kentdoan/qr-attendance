@@ -1,6 +1,6 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminRemoveUserFromGroupCommand, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { handler } from '../../src/functions/admin/index';
+import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminRemoveUserFromGroupCommand, AdminUpdateUserAttributesCommand, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { handler } from '../../src/indexes/adminIndex';
 import { createMockEvent } from '../session/eventFactory';
 
 const cognitoMock = mockClient(CognitoIdentityProviderClient);
@@ -9,6 +9,7 @@ describe('Admin Lambda Handler', () => {
   beforeEach(() => {
     cognitoMock.reset();
     process.env.USER_POOL_ID = 'pool-123';
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -49,6 +50,7 @@ describe('Admin Lambda Handler', () => {
 
   it('should assign TEACHER role', async () => {
     cognitoMock.on(AdminAddUserToGroupCommand).resolves({});
+    cognitoMock.on(AdminUpdateUserAttributesCommand).resolves({});
 
     const event = createMockEvent({
       method: 'POST',
@@ -60,7 +62,7 @@ describe('Admin Lambda Handler', () => {
     const response = await handler(event);
     expect(response.statusCode).toBe(200);
     
-    expect(cognitoMock.calls().length).toBe(1);
+    expect(cognitoMock.calls().length).toBe(2); // AddUserToGroup + UpdateUserAttributes
     const input = cognitoMock.calls()[0].args[0].input as any;
     expect(input.GroupName).toBe('TEACHER');
     expect(input.Username).toBe('user2');
@@ -68,6 +70,7 @@ describe('Admin Lambda Handler', () => {
 
   it('should revoke TEACHER role', async () => {
     cognitoMock.on(AdminRemoveUserFromGroupCommand).resolves({});
+    cognitoMock.on(AdminUpdateUserAttributesCommand).resolves({});
 
     const event = createMockEvent({
       method: 'POST',
@@ -79,7 +82,7 @@ describe('Admin Lambda Handler', () => {
     const response = await handler(event);
     expect(response.statusCode).toBe(200);
     
-    expect(cognitoMock.calls().length).toBe(1);
+    expect(cognitoMock.calls().length).toBe(2); // RemoveUserFromGroup + UpdateUserAttributes
     const input = cognitoMock.calls()[0].args[0].input as any;
     expect(input.GroupName).toBe('TEACHER');
     expect(input.Username).toBe('user3');
