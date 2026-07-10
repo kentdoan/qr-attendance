@@ -1,6 +1,6 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { handleCheckin } from '../../src/functions/checkin/handler';
+import { handleCheckin } from '../../src/handlers/checkinHandler';
 import { createMockEvent } from '../session/eventFactory';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
@@ -152,6 +152,8 @@ describe('Check-in Lambda Handler', () => {
       }),
     });
 
-    await expect(handleCheckin(event)).rejects.toThrow('Forbidden: Caller is not a STUDENT');
+    const response = await handleCheckin(event);
+    expect(response.statusCode).toBe(403);
+    expect(JSON.parse(response.body!).message).toBe('Forbidden: Caller is not a STUDENT');
   });
 });

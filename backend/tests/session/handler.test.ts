@@ -1,10 +1,8 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { handleCreateSession } from '../../src/functions/session/handlers/create';
-import { handleGetSession } from '../../src/functions/session/handlers/get';
-import { handleDeleteSession } from '../../src/functions/session/handlers/delete';
+import { handleCreateSession, handleGetSession, handleDeleteSession } from '../../src/handlers/sessionHandler';
 import { createMockEvent } from './eventFactory';
-import { SessionStatus } from '../../src/functions/session/types';
+import { SessionStatus } from '../../src/shared/models';
 
 const ddbMock = mockClient(DynamoDBDocumentClient);
 
@@ -48,7 +46,7 @@ describe('Session Lambda Handler', () => {
       expect(JSON.parse(response.body!).message).toBe('Invalid payload');
     });
 
-    it('should throw an error if user is not in TEACHER group', async () => {
+    it('should return 403 if user is not in TEACHER group', async () => {
       const event = createMockEvent({
         method: 'POST',
         path: '/sessions',
@@ -56,7 +54,9 @@ describe('Session Lambda Handler', () => {
         groups: ['STUDENT'], // Not a teacher
       });
 
-      await expect(handleCreateSession(event)).rejects.toThrow('Forbidden: Caller is not a TEACHER');
+      const response = await handleCreateSession(event);
+      expect(response.statusCode).toBe(403);
+      expect(JSON.parse(response.body!).message).toBe('Forbidden: Caller is not a TEACHER');
     });
   });
 
