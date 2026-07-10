@@ -66,8 +66,6 @@ serverless-qr-attendance/
 │   ├── package.json
 │   │
 │   ├── src/
-│   │   ├── functions/           # Lambda handlers
-│   │   └── shared/              # Utilities dùng chung
 │   └── tests/                   # Unit tests
 │
 ├── docs/                        # Tài liệu dự án
