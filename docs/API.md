@@ -100,7 +100,7 @@
 | `400` | `invalid_type` | Thiếu token, sessionId hoặc deviceFingerprint |
 | `400` | `INVALID_TOKEN` | Token không tồn tại, hết hạn hoặc không khớp Session |
 | `400` | `SESSION_CLOSED` | Session đã bị đóng (CLOSED) hoặc quá giờ (ACTIVE nhưng hết hạn) |
-| `400` | `ALREADY_CHECKED_IN` | Sinh viên đã điểm danh session này rồi |
+| `409` | `ALREADY_CHECKED_IN` | Sinh viên đã điểm danh session này rồi |
 
 ---
 
