@@ -1,7 +1,8 @@
 import * as repo from '../repositories/checkinRepository';
+import * as sessionRepo from '../repositories/sessionRepository';
 import { Logger } from '../shared/logger';
-import { BadRequestError, ConflictError } from '../shared/errors';
-import { AttendanceItem } from '../shared/models';
+import { BadRequestError, ConflictError, NotFoundError } from '../shared/errors';
+import { AttendanceItem, SessionStatus } from '../shared/models';
 
 export const processCheckin = async (studentId: string, token: string, sessionId: string, deviceFingerprint: string): Promise<AttendanceItem> => {
     // 1. Verify Token exists
@@ -13,6 +14,16 @@ export const processCheckin = async (studentId: string, token: string, sessionId
     // 2. Verify token matches the session
     if (qrToken.sessionId !== sessionId) {
         throw new BadRequestError("QR code does not match this session");
+    }
+
+    // 2.5. Verify session is still ACTIVE and not expired (UC-F04)
+    const session = await sessionRepo.getSession(sessionId);
+    if (!session) {
+        throw new NotFoundError("Session not found");
+    }
+    const isExpired = new Date() > new Date(session.expiresAt);
+    if (session.status === SessionStatus.CLOSED || isExpired) {
+        throw new BadRequestError("SESSION_CLOSED");
     }
 
     // 3. Check Idempotency (has student already checked in?)
