@@ -46,3 +46,5 @@ export const processCheckin = async (studentId: string, token: string, sessionId
 
     return attendance;
 };
+
+
