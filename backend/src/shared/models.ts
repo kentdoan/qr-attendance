@@ -29,6 +29,7 @@ export interface AttendanceItem {
 export interface AttendanceRecord {
   studentId: string;
   checkinTime: number;
+  deviceFingerprint: string;
 }
 
 export interface ReportResponse {

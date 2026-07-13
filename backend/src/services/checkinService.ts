@@ -1,6 +1,5 @@
 import * as repo from '../repositories/checkinRepository';
 import * as sessionRepo from '../repositories/sessionRepository';
-import { Logger } from '../shared/logger';
 import { BadRequestError, ConflictError, NotFoundError } from '../shared/errors';
 import { AttendanceItem, SessionStatus } from '../shared/models';
 

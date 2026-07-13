@@ -20,6 +20,7 @@ export const getReport = async (sessionId: string, teacherId: string): Promise<R
     attendees: attendanceRecords.map(record => ({
       studentId: record.studentId,
       checkinTime: record.checkinTime,
+      deviceFingerprint: record.deviceFingerprint,
     })),
   };
 };

@@ -112,7 +112,7 @@
   ```json
   {
     "sessionId": "uuid",
-    "total": 42,
+    "totalAttendees": 3,
     "attendees": [
       {
         "studentId": "string",
