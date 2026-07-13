@@ -29,6 +29,12 @@
   ```
 - **Errors**: `401` (chưa đăng nhập), `403` (không có quyền)
 
+### `GET /sessions` — Lấy danh sách phiên điểm danh
+- **Auth**: Bearer JWT (nhóm `TEACHER`)
+- **Query Params**: `?status=ACTIVE` (tùy chọn để lọc)
+- **Response 200**: Trả về mảng (array) chứa thông tin các session.
+
+
 ### `GET /sessions/{sessionId}` — Lấy thông tin session
 - **Auth**: Bearer JWT
 - **Response `200`**:
