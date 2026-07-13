@@ -375,14 +375,3 @@ Resources:
         Sourcemap: true
         EntryPoints: 
         - src/indexes/adminIndex.ts
-
-Outputs:
-  ApiEndpoint:
-    Description: "API Gateway endpoint URL"
-    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
-  UserPoolId:
-    Description: "Cognito User Pool ID"
-    Value: !Ref UserPool
-  UserPoolClientId:
-    Description: "Cognito User Pool Client ID"
-    Value: !Ref UserPoolClient
