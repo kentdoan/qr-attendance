@@ -19,7 +19,6 @@ confirm_changeset = true
 resolve_s3 = true
 stack_name = "qr-attendance"
 s3_prefix = "qr-attendance"
-region = "ap-southeast-1"
 image_repositories = []
 
 [default.package.parameters]

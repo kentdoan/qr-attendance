@@ -15,7 +15,7 @@
 ## 2. Session API (`λ Session`)
 
 ### `POST /sessions` — Tạo phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
+- **Auth**: Bearer JWT (nhóm `TEACHER`)
 - **Request Body**:
   ```json
   {
@@ -52,7 +52,7 @@
 - **Errors**: `404` (không tìm thấy)
 
 ### `PATCH /sessions/{sessionId}/close` — Đóng phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`, chỉ teacher sở hữu session)
+- **Auth**: Bearer JWT (nhóm `TEACHER`, chỉ teacher sở hữu session)
 - **Response `200`**:
   ```json
   { "message": "Session closed successfully" }
@@ -60,7 +60,7 @@
 - **Errors**: `403` (không phải chủ sở hữu session), `404`, `400` (đã CLOSED rồi)
 
 ### `DELETE /sessions/{sessionId}` — Xóa phiên điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`, chỉ teacher sở hữu session)
+- **Auth**: Bearer JWT (nhóm `TEACHER`, chỉ teacher sở hữu session)
 - **Response `200`**:
   ```json
   { "message": "Session deleted successfully" }
@@ -71,7 +71,7 @@
 ## 3. QR Generator API (`λ QR Generator`)
 
 ### `GET /sessions/{sessionId}/qr` — Lấy QR token mới
-- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
+- **Auth**: Bearer JWT (nhóm `TEACHER`)
 - **Response `200`**:
   ```json
   {
@@ -113,7 +113,7 @@
 ## 5. Report API (`λ Report`)
 
 ### `GET /sessions/{sessionId}/report` — Xem báo cáo điểm danh
-- **Auth**: Bearer JWT (nhóm `TEACHER` hoặc `ADMIN`)
+- **Auth**: Bearer JWT (nhóm `TEACHER`)
 - **Response `200`**:
   ```json
   {

@@ -180,7 +180,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: authIndex.handler
       Policies:
         - Statement:
             - Effect: Allow
@@ -208,7 +208,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: sessionIndex.handler
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionsTable
@@ -251,7 +251,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: qrGeneratorIndex.handler
       Environment:
         Variables:
           HMAC_SECRET_ARN: !Ref HmacSecret
@@ -283,7 +283,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: checkinIndex.handler
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref SessionsTable
@@ -312,7 +312,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: reportIndex.handler
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref SessionsTable
@@ -339,7 +339,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: .
-      Handler: index.handler
+      Handler: adminIndex.handler
       Environment:
         Variables:
           USER_POOL_ID: !Ref UserPool
