@@ -16,6 +16,7 @@
 | FR-10 | Admin xem danh sách toàn bộ tài khoản trong hệ thống |
 | FR-11 | Admin cấp và thu hồi quyền Giảng viên (`TEACHER`) cho tài khoản bất kỳ |
 | FR-12 | Giảng viên có thể thiết lập thời gian hẹn giờ để tự động đóng phiên điểm danh |
+| FR-13 | Giảng viên có thể xem danh sách các phiên điểm danh do mình quản lý |
 
 ## 2. Use Cases
 
@@ -31,6 +32,7 @@
 | UC-T06 | Xem danh sách điểm danh | Giảng viên xem ai đã điểm danh trong session | Session đã tồn tại | Danh sách sinh viên kèm thời gian | FR-09 |
 | UC-T07 | Xuất báo cáo | Giảng viên xem báo cáo theo lớp / ngày | Đã có dữ liệu điểm danh | Báo cáo tổng hợp | FR-09 |
 | UC-T08 | Xóa phiên điểm danh | Giảng viên xóa session tạo nhầm | Session đã tồn tại | Session và dữ liệu điểm danh bị xóa | FR-04 |
+| UC-T09 | Xem danh sách phiên điểm danh | Giảng viên xem tất cả session do mình tạo | Đã đăng nhập (TEACHER) | Danh sách các session | FR-13 |
 
 #### Use Case Diagram — Giảng viên
 
@@ -45,6 +47,7 @@ graph LR
 
     subgraph Quản lý Phiên
         UC_T03(["UC-T03: Tạo phiên"])
+        UC_T09(["UC-T09: Danh sách phiên"])
         UC_T04(["UC-T04: Lấy QR Code"])
         UC_T05(["UC-T05: Đóng phiên"])
         UC_T08(["UC-T08: Xóa phiên"])
@@ -63,6 +66,7 @@ graph LR
     GV --> UC_T06
     GV --> UC_T07
     GV --> UC_T08
+    GV --> UC_T09
 ```
 
 ---
