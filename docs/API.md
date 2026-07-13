@@ -122,6 +122,7 @@
     "attendees": [
       {
         "studentId": "string",
+        "studentName": "string",
         "checkinTime": 1719543200,
         "deviceFingerprint": "string"
       }
