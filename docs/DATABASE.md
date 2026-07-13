@@ -36,5 +36,6 @@
 |-----------|------|---------|
 | `sessionId` | String (PK) | Partition key |
 | `studentId` | String (SK) | Sort key — kết hợp PK+SK đảm bảo unique per session |
+| `studentName` | String | Tên hiển thị của sinh viên (lấy từ Cognito) |
 | `checkinTime` | Number | Unix timestamp (ms) |
 | `deviceFingerprint` | String | Identifier thiết bị của user |

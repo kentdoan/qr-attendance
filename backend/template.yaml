@@ -41,7 +41,7 @@ Resources:
         - AttributeName: token
           KeyType: HASH
       TimeToLiveSpecification:
-        AttributeName: ttl
+        AttributeName: expiresAt
         Enabled: true
 
   AttendanceTable:

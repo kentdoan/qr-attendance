@@ -25,7 +25,18 @@
   ```
 - **Response `201`**:
   ```json
-  { "sessionId": "uuid" }
+  {
+    "message": "Session created successfully",
+    "session": {
+      "sessionId": "uuid",
+      "teacherId": "string",
+      "className": "string",
+      "status": "ACTIVE",
+      "createdAt": "ISO 8601",
+      "expiresAt": "ISO 8601",
+      "duration": 60
+    }
+  }
   ```
 - **Errors**: `401` (chưa đăng nhập), `403` (không có quyền)
 
@@ -40,13 +51,15 @@
 - **Response `200`**:
   ```json
   {
-    "sessionId": "uuid",
-    "teacherId": "string",
-    "className": "string",
-    "status": "ACTIVE | CLOSED",
-    "createdAt": "ISO 8601",
-    "expiresAt": "ISO 8601",
-    "duration": 60
+    "session": {
+      "sessionId": "uuid",
+      "teacherId": "string",
+      "className": "string",
+      "status": "ACTIVE | CLOSED",
+      "createdAt": "ISO 8601",
+      "expiresAt": "ISO 8601",
+      "duration": 60
+    }
   }
   ```
 - **Errors**: `404` (không tìm thấy)
@@ -97,7 +110,16 @@
   ```
 - **Response `200`**:
   ```json
-  { "message": "Check-in successful" }
+  {
+    "message": "Check-in successful",
+    "attendance": {
+      "sessionId": "uuid",
+      "studentId": "string",
+      "studentName": "string",
+      "checkinTime": 1719543200,
+      "deviceFingerprint": "string"
+    }
+  }
   ```
 - **Errors**:
 
