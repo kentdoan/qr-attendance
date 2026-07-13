@@ -13,6 +13,12 @@ export const Responses = {
     body: JSON.stringify(data),
   }),
 
+  created: (data: any = {}): APIGatewayProxyStructuredResultV2 => ({
+    statusCode: 201,
+    headers: CORS_HEADERS,
+    body: JSON.stringify(data),
+  }),
+
   badRequest: (message: string, errors?: any): APIGatewayProxyStructuredResultV2 => ({
     statusCode: 400,
     headers: CORS_HEADERS,

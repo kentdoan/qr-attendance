@@ -51,6 +51,7 @@ describe('Admin Lambda Handler', () => {
   it('should assign TEACHER role', async () => {
     cognitoMock.on(AdminAddUserToGroupCommand).resolves({});
     cognitoMock.on(AdminUpdateUserAttributesCommand).resolves({});
+    cognitoMock.on(AdminRemoveUserFromGroupCommand).resolves({});
 
     const event = createMockEvent({
       method: 'POST',
@@ -62,7 +63,7 @@ describe('Admin Lambda Handler', () => {
     const response = await handler(event);
     expect(response.statusCode).toBe(200);
     
-    expect(cognitoMock.calls().length).toBe(2); // AddUserToGroup + UpdateUserAttributes
+    expect(cognitoMock.calls().length).toBe(3); // AddUserToGroup + UpdateUserAttributes + RemoveUserFromGroup
     const input = cognitoMock.calls()[0].args[0].input as any;
     expect(input.GroupName).toBe('TEACHER');
     expect(input.Username).toBe('user2');
@@ -71,6 +72,7 @@ describe('Admin Lambda Handler', () => {
   it('should revoke TEACHER role', async () => {
     cognitoMock.on(AdminRemoveUserFromGroupCommand).resolves({});
     cognitoMock.on(AdminUpdateUserAttributesCommand).resolves({});
+    cognitoMock.on(AdminAddUserToGroupCommand).resolves({});
 
     const event = createMockEvent({
       method: 'POST',
@@ -82,7 +84,7 @@ describe('Admin Lambda Handler', () => {
     const response = await handler(event);
     expect(response.statusCode).toBe(200);
     
-    expect(cognitoMock.calls().length).toBe(2); // RemoveUserFromGroup + UpdateUserAttributes
+    expect(cognitoMock.calls().length).toBe(3); // RemoveUserFromGroup + UpdateUserAttributes + AddUserToGroup
     const input = cognitoMock.calls()[0].args[0].input as any;
     expect(input.GroupName).toBe('TEACHER');
     expect(input.Username).toBe('user3');

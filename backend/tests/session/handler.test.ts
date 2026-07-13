@@ -24,7 +24,7 @@ describe('Session Lambda Handler', () => {
 
       const response = await handleCreateSession(event);
       
-      expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(201);
       const responseBody = JSON.parse(response.body!);
       expect(responseBody.session.className).toBe('CS101');
       expect(responseBody.session.duration).toBe(90);
@@ -102,6 +102,31 @@ describe('Session Lambda Handler', () => {
       
       expect(response.statusCode).toBe(403);
       expect(JSON.parse(response.body!).message).toBe('You do not own this session');
+    });
+  });
+
+  describe('handleCloseSession (POST /sessions/{sessionId}/close)', () => {
+    it('should return 400 if session is already closed', async () => {
+      ddbMock.on(GetCommand).resolves({
+        Item: {
+          sessionId: 'session-123',
+          teacherId: 'test-teacher-id',
+          status: SessionStatus.CLOSED, // Already closed
+        }
+      });
+
+      const { handleCloseSession } = require('../../src/handlers/sessionHandler');
+      
+      const event = createMockEvent({
+        method: 'POST',
+        path: '/sessions/session-123/close',
+        pathParameters: { sessionId: 'session-123' },
+      });
+
+      const response = await handleCloseSession(event);
+      
+      expect(response.statusCode).toBe(400);
+      expect(JSON.parse(response.body!).message).toBe('Session is already closed');
     });
   });
 });

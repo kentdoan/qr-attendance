@@ -21,6 +21,19 @@ export const assignTeacher = async (username: string): Promise<void> => {
     GroupName: 'TEACHER',
   }));
 
+  try {
+    await cognitoClient.send(new AdminRemoveUserFromGroupCommand({
+      UserPoolId: poolId,
+      Username: username,
+      GroupName: 'STUDENT',
+    }));
+  } catch (err: any) {
+    // Ignore if user was not in STUDENT group
+    if (err.name !== 'UserNotFoundException' && err.name !== 'InvalidParameterException') {
+      Logger.warn(`Failed to remove user from STUDENT group: ${err.message}`);
+    }
+  }
+
   await cognitoClient.send(new AdminUpdateUserAttributesCommand({
     UserPoolId: poolId,
     Username: username,
@@ -34,6 +47,12 @@ export const revokeTeacher = async (username: string): Promise<void> => {
     UserPoolId: poolId,
     Username: username,
     GroupName: 'TEACHER',
+  }));
+
+  await cognitoClient.send(new AdminAddUserToGroupCommand({
+    UserPoolId: poolId,
+    Username: username,
+    GroupName: 'STUDENT',
   }));
 
   await cognitoClient.send(new AdminUpdateUserAttributesCommand({

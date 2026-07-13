@@ -16,7 +16,7 @@ export const handleCreateSession = async (event: APIGatewayProxyEventV2WithJWTAu
     if (!parsed.success) return Responses.badRequest("Invalid payload", parsed.error.errors);
 
     const session = await sessionService.createSession(teacherId, parsed.data.className, parsed.data.duration);
-    return Responses.success({ message: "Session created successfully", session });
+    return Responses.created({ message: "Session created successfully", session });
   } catch (error: any) {
     return errorHandler(error);
   }

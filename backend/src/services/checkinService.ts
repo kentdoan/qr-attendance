@@ -3,7 +3,7 @@ import * as sessionRepo from '../repositories/sessionRepository';
 import { BadRequestError, ConflictError, NotFoundError } from '../shared/errors';
 import { AttendanceItem, SessionStatus } from '../shared/models';
 
-export const processCheckin = async (studentId: string, token: string, sessionId: string, deviceFingerprint: string): Promise<AttendanceItem> => {
+export const processCheckin = async (studentId: string, studentName: string, token: string, sessionId: string, deviceFingerprint: string): Promise<AttendanceItem> => {
     // 1. Verify Token exists
     const qrToken = await repo.getQrToken(token);
     if (!qrToken) {
@@ -35,6 +35,7 @@ export const processCheckin = async (studentId: string, token: string, sessionId
     const attendance: AttendanceItem = {
         sessionId,
         studentId,
+        studentName,
         checkinTime: Date.now(),
         deviceFingerprint,
     };

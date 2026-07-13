@@ -22,6 +22,7 @@ export interface QrTokenItem {
 export interface AttendanceItem {
   sessionId: string;
   studentId: string;
+  studentName?: string;
   checkinTime: number; // Unix timestamp
   deviceFingerprint: string;
 }

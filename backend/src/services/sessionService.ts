@@ -1,6 +1,6 @@
 import * as repo from '../repositories/sessionRepository';
 import { SessionItem, SessionStatus } from '../shared/models';
-import { NotFoundError, ForbiddenError } from '../shared/errors';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../shared/errors';
 import { randomUUID } from 'crypto';
 
 const validateSessionOwnership = async (sessionId: string, teacherId: string): Promise<SessionItem> => {
@@ -38,6 +38,9 @@ export const deleteSession = async (sessionId: string, teacherId: string): Promi
 };
 
 export const closeSession = async (sessionId: string, teacherId: string): Promise<void> => {
-  await validateSessionOwnership(sessionId, teacherId);
+  const session = await validateSessionOwnership(sessionId, teacherId);
+  if (session.status === SessionStatus.CLOSED) {
+    throw new BadRequestError('Session is already closed');
+  }
   await repo.updateSessionStatus(sessionId, SessionStatus.CLOSED);
 };

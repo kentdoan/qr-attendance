@@ -28,6 +28,13 @@ export const getStudentId = (event: APIGatewayProxyEventV2WithJWTAuthorizer): st
   return requireGroup(event, 'STUDENT');
 };
 
+export const getStudentInfo = (event: APIGatewayProxyEventV2WithJWTAuthorizer): { id: string, name: string } => {
+  const id = requireGroup(event, 'STUDENT');
+  const claims = getClaims(event);
+  const name = claims.name as string || 'Unknown';
+  return { id, name };
+};
+
 export const requireAdmin = (event: APIGatewayProxyEventV2WithJWTAuthorizer): string => {
   return requireGroup(event, 'ADMIN');
 };
