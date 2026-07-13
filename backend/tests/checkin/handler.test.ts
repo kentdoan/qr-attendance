@@ -12,6 +12,7 @@ describe('Check-in Lambda Handler', () => {
     // Set required env vars
     process.env.QR_TOKENS_TABLE = 'QrTokensTable';
     process.env.ATTENDANCE_TABLE = 'AttendanceTable';
+    process.env.SESSIONS_TABLE = 'SessionsTable';
   });
 
   afterEach(() => {
@@ -30,6 +31,15 @@ describe('Check-in Lambda Handler', () => {
 
     // 2. Mock GetCommand for Attendance (returns null, meaning not checked in yet)
     ddbMock.on(GetCommand, { TableName: 'AttendanceTable' }).resolves({});
+
+    // 2.5 Mock GetCommand for Session (ACTIVE)
+    ddbMock.on(GetCommand, { TableName: 'SessionsTable' }).resolves({
+      Item: {
+        sessionId: 'session-123',
+        status: 'ACTIVE',
+        expiresAt: new Date(Date.now() + 1000000).toISOString(),
+      },
+    });
 
     // 3. Mock PutCommand (Save Attendance)
     ddbMock.on(PutCommand).resolves({});
@@ -54,7 +64,8 @@ describe('Check-in Lambda Handler', () => {
     expect(JSON.parse(response.body!).message).toBe('Check-in successful');
     
     // Verify DDB operations were called
-    expect(ddbMock.calls().length).toBe(4);
+    // (1 Get Token, 1 Get Session, 1 Get Attendance, 1 Put Attendance, 1 Delete Token)
+    expect(ddbMock.calls().length).toBe(5);
   });
 
   it('should return 400 if token is missing or invalid in database', async () => {
@@ -120,6 +131,15 @@ describe('Check-in Lambda Handler', () => {
       Item: {
         sessionId: 'session-123',
         studentId: 'test-user-id', // Match event factory sub
+      },
+    });
+
+    // Mock GetCommand for Session (ACTIVE)
+    ddbMock.on(GetCommand, { TableName: 'SessionsTable' }).resolves({
+      Item: {
+        sessionId: 'session-123',
+        status: 'ACTIVE',
+        expiresAt: new Date(Date.now() + 1000000).toISOString(),
       },
     });
 

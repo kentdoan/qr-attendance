@@ -186,22 +186,15 @@ Tất cả env vars được inject qua `template.yaml`, không hard-code trong 
 
 ## Khởi tạo Admin Account
 
-Tài khoản Admin không đăng ký qua portal. Chạy sau khi deploy:
-
-```bash
-# Tạo user Admin
-aws cognito-idp admin-create-user \
-  --user-pool-id <USER_POOL_ID> \
-  --username admin@example.com \
-  --temporary-password "Temp@1234" \
-  --message-action SUPPRESS
-
-# Thêm vào group ADMIN
-aws cognito-idp admin-add-user-to-group \
-  --user-pool-id <USER_POOL_ID> \
-  --username admin@example.com \
-  --group-name ADMIN
-```
+Hệ thống không cho phép tự đăng ký làm Admin. Để có tài khoản test các chức năng Admin, hãy làm theo 2 bước:
+1. Đăng ký 1 tài khoản bình thường (Student) qua giao diện Frontend hoặc Postman.
+2. Dùng AWS CLI chạy lệnh sau để nhét user đó vào nhóm ADMIN (Nhớ thay các tham số):
+   ```bash
+   aws cognito-idp admin-add-user-to-group \
+     --user-pool-id <VITE_USER_POOL_ID> \
+     --username <EMAIL_DA_DANG_KY> \
+     --group-name ADMIN
+   ```
 
 ---
 
