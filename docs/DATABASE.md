@@ -8,7 +8,7 @@
 | **QrTokens** | Token ngắn hạn — tự động bị xóa sau 30–60 giây nhờ tính năng DynamoDB TTL |
 | **Attendance** | Bản ghi điểm danh (`sessionId` + `studentId`, unique per session để chống điểm danh 2 lần) |
 
-## 2. Chi tiết Schema
+## 2. Chi tiết các bảng
 
 ### 2.1 Sessions Table
 

@@ -2,7 +2,7 @@
 
 ## 1. Pattern: Index → Handler → Service → Repository
 
-Ta sử dụng **Horizontal Layered Architecture** — mỗi tầng có trách nhiệm riêng biệt và rõ ràng.
+Ta sử dụng **Layered Architecture** 
 
 ```
 API Gateway Event
