@@ -145,6 +145,27 @@ Resources:
               audience:
                 - !Ref UserPoolClient
             IdentitySource: "$request.header.Authorization"
+      # Giới hạn mặc định cho toàn bộ API
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 50   # Số request tối đa được xử lý đồng thời trong 1 burst
+        ThrottlingRateLimit: 30    # Số request/giây tối đa cho toàn bộ API
+      # Giới hạn riêng cho từng route nhạy cảm
+      RouteSettings:
+        "POST /checkin":
+          ThrottlingBurstLimit: 20
+          ThrottlingRateLimit: 10  # Giới hạn chặt nhất: route dễ bị spam nhất
+        "GET /sessions/{sessionId}/qr":
+          ThrottlingBurstLimit: 30
+          ThrottlingRateLimit: 20  # Giáo viên lấy QR mỗi 30s, không cần cao
+        "POST /sessions":
+          ThrottlingBurstLimit: 10
+          ThrottlingRateLimit: 5   # Tạo session: ít dùng
+        "POST /admin/assign-teacher":
+          ThrottlingBurstLimit: 5
+          ThrottlingRateLimit: 3   # Admin routes: ít dùng, giới hạn chặt
+        "POST /admin/revoke-teacher":
+          ThrottlingBurstLimit: 5
+          ThrottlingRateLimit: 3
 
   # ==========================================
   # 5. Lambda Functions
