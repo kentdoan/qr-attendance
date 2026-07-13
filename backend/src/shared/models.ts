@@ -52,5 +52,5 @@ export interface PostConfirmationEvent {
       [key: string]: string;
     };
   };
-  response: {};
+  response: Record<string, unknown>;
 }

@@ -10,7 +10,7 @@ export const handler = async (
   const path = event.requestContext.http.path; 
 
   try {
-    if (method === 'GET' && path.match(/^\/sessions\/[^\/]+\/report$/)) {
+    if (method === 'GET' && path.match(/^\/sessions\/[^/]+\/report$/)) {
       return await handleGetReport(event);
     }
 
