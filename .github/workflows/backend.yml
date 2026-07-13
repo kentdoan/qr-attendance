@@ -36,5 +36,9 @@ jobs:
             --resolve-s3 \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --no-confirm-changeset \
-            --no-fail-on-empty-changeset
+            --no-fail-on-empty-changeset > deploy_log.txt 2>&1
         working-directory: ./backend
+
+      - name: Check Deploy Status
+        if: failure()
+        run: cat ./backend/deploy_log.txt
