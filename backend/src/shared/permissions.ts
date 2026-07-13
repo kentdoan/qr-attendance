@@ -17,7 +17,7 @@ export const requireGroup = (event: APIGatewayProxyEventV2WithJWTAuthorizer, gro
     throw new ForbiddenError(`Forbidden: Caller is not a ${groupName}`);
   }
 
-  return claims.sub as string; // Return userId
+  return claims.sub as string;
 };
 
 export const getTeacherId = (event: APIGatewayProxyEventV2WithJWTAuthorizer): string => {
