@@ -1,16 +1,49 @@
-# React + Vite
+# QR Attendance — Frontend (React + TypeScript + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend cho **Hệ thống Quét Mã QR Điểm Danh Động** (Đề tài 3 — Application Development on AWS).
 
-Currently, two official plugins are available:
+## Bắt đầu
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+cp .env.example .env   # rồi điền giá trị (mặc định đang bật mock)
+npm run dev
+```
 
-## React Compiler
+Mở http://localhost:5173
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Chế độ Mock
 
-## Expanding the ESLint configuration
+Đặt `VITE_USE_MOCK_API=true` trong `.env` để chạy toàn bộ frontend mà không cần backend/Cognito.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Tài khoản mock (mật khẩu chung: `123456`):
+
+| Role    | Email             |
+|---------|-------------------|
+| STUDENT | student@demo.com  |
+| TEACHER | teacher@demo.com  |
+| ADMIN   | admin@demo.com    |
+
+## Cấu trúc `src/`
+
+```
+src/
+  types/index.ts          # Toàn bộ TypeScript interfaces & enums
+  config/amplify.ts        # Cấu hình aws-amplify v6 (Cognito)
+  api/
+    mockData.ts            # Dữ liệu giả lập + mock API router
+    client.ts              # Axios client + interceptor gắn idToken
+  auth/AuthContext.tsx     # Auth state: login/register/logout (mock + Cognito)
+  components/ProtectedRoute.tsx  # Route guard theo Role
+  pages/
+    Login.tsx
+    Register.tsx
+  main.tsx                 # Khởi tạo Amplify + AuthProvider
+  App.tsx                  # Router + guard theo role
+```
+
+## Chuyển sang backend thật
+
+1. Đặt `VITE_USE_MOCK_API=false`.
+2. Điền `VITE_AWS_REGION`, `VITE_COGNITO_USER_POOL_ID`, `VITE_COGNITO_USER_POOL_CLIENT_ID`, `VITE_API_BASE_URL`.
+3. Client sẽ tự đính `idToken` (Cognito) vào header `Authorization` cho mọi request.
