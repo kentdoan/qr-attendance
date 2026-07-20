@@ -172,12 +172,14 @@
 
 ### `GET /admin/users` — Xem danh sách người dùng
 - **Auth**: Bearer JWT (nhóm `ADMIN`)
+- **Query Params**: `?nextToken=string` (tùy chọn để lấy trang tiếp theo)
 - **Response `200`**:
   ```json
   {
     "users": [
       { "username": "string", "email": "string", "role": "string", "status": "string", "createdAt": "ISO 8601" }
-    ]
+    ],
+    "nextToken": "string-token"
   }
   ```
 

@@ -62,14 +62,15 @@ export const revokeTeacher = async (username: string): Promise<void> => {
   }));
 };
 
-export const listUsers = async (): Promise<any[]> => {
+export const listUsers = async (paginationToken?: string): Promise<{ users: any[], nextToken?: string }> => {
   const poolId = getPoolId();
   const response = await cognitoClient.send(new ListUsersCommand({
     UserPoolId: poolId,
     Limit: 50,
+    ...(paginationToken && { PaginationToken: paginationToken }),
   }));
   
-  return (response.Users || []).map(user => {
+  const users = (response.Users || []).map(user => {
     return {
       username: user.Username,
       status: user.UserStatus,
@@ -77,4 +78,6 @@ export const listUsers = async (): Promise<any[]> => {
       created: user.UserCreateDate,
     };
   });
+
+  return { users, nextToken: response.PaginationToken };
 };
