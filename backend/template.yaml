@@ -26,9 +26,18 @@ Resources:
       AttributeDefinitions:
         - AttributeName: sessionId
           AttributeType: S
+        - AttributeName: teacherId
+          AttributeType: S
       KeySchema:
         - AttributeName: sessionId
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TeacherIdIndex
+          KeySchema:
+            - AttributeName: teacherId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   QrTokensTable:
     Type: AWS::DynamoDB::Table
@@ -219,6 +228,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /sessions
             Method: POST
+        GetListSessions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /sessions
+            Method: GET
         GetSession:
           Type: HttpApi
           Properties:

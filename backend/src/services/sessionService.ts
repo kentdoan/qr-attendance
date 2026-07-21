@@ -28,6 +28,10 @@ export const createSession = async (teacherId: string, className: string, durati
   return session;
 };
 
+export const getListSessions = async (teacherId: string): Promise<SessionItem[]> => {
+  return await repo.getListSessions(teacherId);
+};
+
 export const getSession = async (sessionId: string, teacherId: string): Promise<SessionItem> => {
   return validateSessionOwnership(sessionId, teacherId);
 };

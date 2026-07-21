@@ -22,6 +22,11 @@
 | `duration` | Number | Thời gian hiệu lực tính bằng phút |
 | `expiresAt` | String | ISO 8601 string. Hết hạn = `createdAt` + `duration` |
 
+#### 2.1.1 Global Secondary Index (GSI)
+| GSI | Partition Key (PK) | Ghi chú |
+|----|---------------------|----------|
+| `TeacherIdIndex` | `teacherId` | Được API `GET /sessions` sử dụng để `Query` tất cả phiên điểm danh giảng viên đã tạo thay vì `Scan` vét cạn |
+
 ### 2.2 QrTokens Table
 
 | Attribute | Type | Ghi chú |

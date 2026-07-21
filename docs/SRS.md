@@ -348,3 +348,24 @@ sequenceDiagram
         FE-->>Admin: Cập nhật quyền thành công
     end
 ```
+
+### SD-07: Giảng viên xem lịch sử các phiên điểm danh
+
+```mermaid
+sequenceDiagram
+    actor GV as Giảng viên
+    participant FE as Frontend
+    participant APIGW as API Gateway
+    participant Session as λ Session
+    participant SessionDB as DynamoDB (sessions)
+
+    GV->>FE: Nhấn "Lịch sử điểm danh"
+    FE->>APIGW: GET /sessions
+    APIGW->>APIGW: Xác thực JWT (Cognito Authorizer)
+    APIGW->>Session: Invoke Lambda
+    Session->>SessionDB: Query { teacherId }
+    SessionDB->>Session: [ session1, session2, ... ]
+    Session->>APIGW: 200 { total: N,  sessions: [...] }
+    APIGW->>FE: 200 (OK)
+    FE->>GV: Hiển thị danh sách N đợt điểm danh
+```

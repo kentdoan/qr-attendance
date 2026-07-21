@@ -1,6 +1,6 @@
 import { errorHandler } from '../shared/errors';
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { handleCreateSession, handleGetSession, handleDeleteSession, handleCloseSession } from '../handlers/sessionHandler';
+import { handleCreateSession, handleGetListSessions, handleGetSession, handleDeleteSession, handleCloseSession } from '../handlers/sessionHandler';
 import { Responses } from '../shared/response';
 
 export const handler = async (
@@ -12,6 +12,9 @@ export const handler = async (
 
     if (method === 'POST' && path === '/sessions') {
       return await handleCreateSession(event);
+    }
+    if (method === 'GET' && path === '/sessions') {
+      return await handleGetListSessions(event);
     }
     if (method === 'GET' && path.match(/^\/sessions\/[a-zA-Z0-9-]+$/)) {
       return await handleGetSession(event);
