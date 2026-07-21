@@ -22,6 +22,19 @@ export const handleCreateSession = async (event: APIGatewayProxyEventV2WithJWTAu
   }
 };
 
+export const handleGetListSessions = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    const teacherId = getTeacherId(event);
+    const sessions = await sessionService.getListSessions(teacherId);
+    return Responses.success({
+      total: sessions.length,
+      sessions,
+    });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};
+
 export const handleGetSession = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
   try {
     const teacherId = getTeacherId(event);
