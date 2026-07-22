@@ -1,10 +1,20 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+// ============================================================================
+// Entry point — khởi tạo Amplify, bọc AuthProvider, render App.
+// ============================================================================
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { configureAmplify } from "./config/amplify";
+import { AuthProvider } from "./auth/AuthContext";
+import App from "./App";
+import "./index.css";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// Cấu hình Amplify (Cognito) trước khi render.
+configureAmplify();
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </React.StrictMode>,
+);

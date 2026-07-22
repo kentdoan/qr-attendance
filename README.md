@@ -194,6 +194,11 @@ Hệ thống không cho phép tự đăng ký làm Admin. Để có tài khoản
      --user-pool-id <VITE_USER_POOL_ID> \
      --username <EMAIL_DA_DANG_KY> \
      --group-name ADMIN
+
+   aws cognito-idp admin-update-user-attributes \
+     --user-pool-id <VITE_USER_POOL_ID> \
+     --username <EMAIL_DA_DANG_KY> \
+     --user-attributes Name=custom:role,Value=ADMIN
    ```
 
 ---
