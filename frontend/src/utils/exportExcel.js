@@ -12,7 +12,6 @@ export function exportReportToExcel(report, sessionTitle = "Phien_Diem_Danh") {
   const rows = report.records.map((r, i) => ({
     STT: i + 1,
     "Họ tên": r.studentName || "Không xác định",
-    "Mã thiết bị": r.deviceFingerprint || "",
     "Thời gian điểm danh": new Date(r.checkinAt).toLocaleString("vi-VN"),
   }));
 
@@ -20,7 +19,6 @@ export function exportReportToExcel(report, sessionTitle = "Phien_Diem_Danh") {
   worksheet["!cols"] = [
     { wch: 6 },
     { wch: 24 },
-    { wch: 28 },
     { wch: 22 },
   ];
 
