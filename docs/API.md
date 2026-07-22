@@ -42,8 +42,34 @@
 
 ### `GET /sessions` — Lấy danh sách phiên điểm danh
 - **Auth**: Bearer JWT (nhóm `TEACHER`)
-- **Query Params**: `?status=ACTIVE` (tùy chọn để lọc)
-- **Response 200**: Trả về mảng (array) chứa thông tin các session.
+- **Query Params**: `?teacherId=god-Nguyen-Hua-Phung`
+- **Response 200**: Trả về mảng (array) chứa thông tin các session:
+  ```json
+  {
+    "total": 2,
+    "sessions": [
+      { 
+        "sessionId": "uuid",
+        "teacherId": "string", 
+        "className": "string",
+        "status": "ACTIVE | CLOSED",
+        "createdAt": "ISO 8601",
+        "expiresAt": "ISO 8601",
+        "duration": 60
+      },
+      { 
+        "sessionId": "uuid",
+        "teacherId": "string", 
+        "className": "string",
+        "status": "ACTIVE | CLOSED",
+        "createdAt": "ISO 8601",
+        "expiresAt": "ISO 8601",
+        "duration": 60
+      }
+    ]
+  }
+  ```
+- **Errors**: `401` (chưa đăng nhập), `403` (không thuộc nhóm TEACHER)
 
 
 ### `GET /sessions/{sessionId}` — Lấy thông tin session
