@@ -127,6 +127,13 @@ Resources:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_USER_SRP_AUTH
+      WriteAttributes:
+        - email
+        - name
+      ReadAttributes:
+        - email
+        - name
+        - custom:role
 
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
