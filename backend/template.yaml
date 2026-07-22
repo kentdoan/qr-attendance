@@ -62,11 +62,22 @@ Resources:
           AttributeType: S
         - AttributeName: studentId
           AttributeType: S
+        - AttributeName: checkinTime
+          AttributeType: N
       KeySchema:
         - AttributeName: sessionId
           KeyType: HASH
         - AttributeName: studentId
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: StudentIdIndex
+          KeySchema:
+            - AttributeName: studentId
+              KeyType: HASH
+            - AttributeName: checkinTime
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
   # ==========================================
   # 2. Secrets Manager (HMAC Key)
@@ -313,6 +324,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /checkin
             Method: POST
+        GetMyAttendance:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /my-attendance
+            Method: GET
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

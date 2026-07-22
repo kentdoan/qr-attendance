@@ -47,4 +47,10 @@ export const processCheckin = async (studentId: string, studentName: string, tok
     return attendance;
 };
 
-
+export const getStudentHistory = async (studentId: string): Promise<Array<{ sessionId: string, checkinTime: number }>> => {
+    const history = await repo.listAttendanceByStudent(studentId);
+    return history.map(item => ({
+        sessionId: item.sessionId,
+        checkinTime: item.checkinTime
+    }));
+};

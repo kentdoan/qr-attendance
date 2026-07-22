@@ -1,7 +1,7 @@
 import { errorHandler } from '../shared/errors';
 import { Responses } from '../shared/response';
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { handleCheckin } from '../handlers/checkinHandler';
+import { handleCheckin, handleGetMyAttendance } from '../handlers/checkinHandler';
 
 export const handler = async (
   event: APIGatewayProxyEventV2WithJWTAuthorizer
@@ -12,6 +12,9 @@ export const handler = async (
   try {
     if (method === 'POST' && path === '/checkin') {
       return await handleCheckin(event);
+    }
+    if (method === 'GET' && path === '/my-attendance') {
+      return await handleGetMyAttendance(event);
     }
 
     return Responses.notFound('Route Not Found');

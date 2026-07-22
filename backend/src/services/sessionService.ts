@@ -7,6 +7,12 @@ const validateSessionOwnership = async (sessionId: string, teacherId: string): P
   const session = await repo.getSession(sessionId);
   if (!session) throw new NotFoundError('Session not found');
   if (session.teacherId !== teacherId) throw new ForbiddenError('You do not own this session');
+
+  if (session.status === SessionStatus.ACTIVE && new Date() > new Date(session.expiresAt)) {
+    await repo.updateSessionStatus(sessionId, SessionStatus.CLOSED);
+    session.status = SessionStatus.CLOSED;
+  }
+
   return session;
 };
 

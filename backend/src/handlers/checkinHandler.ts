@@ -32,3 +32,13 @@ export const handleCheckin = async (event: APIGatewayProxyEventV2WithJWTAuthoriz
     return errorHandler(error);
   }
 };
+
+export const handleGetMyAttendance = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    const { id: studentId } = getStudentInfo(event);
+    const history = await checkinService.getStudentHistory(studentId);
+    return Responses.success({ attendance: history });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};
