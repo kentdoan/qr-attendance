@@ -3,7 +3,7 @@ source "$(dirname "$0")/.env"
 
 ADMIN_EMAIL="admin1@demo.com"
 ADMIN_PASSWORD="Password123!"
-ADMIN_NAME="Super Admin frontend"
+ADMIN_NAME="super admin"
 
 aws cognito-idp sign-up \
   --client-id $CLIENT_ID \
