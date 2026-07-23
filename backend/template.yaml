@@ -378,8 +378,11 @@ Resources:
             TableName: !Ref SessionsTable
         - DynamoDBWritePolicy:
             TableName: !Ref QrTokensTable
-        - AWSSecretsManagerGetSecretValuePolicy:
-            SecretArn: !Ref HmacSecret
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+              Resource: !Ref HmacSecret
       Events:
         GenerateQR:
           Type: HttpApi
