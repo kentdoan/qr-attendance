@@ -103,10 +103,9 @@ Resources:
   # ==========================================
   # 2. Secrets Manager (HMAC Key)
   # ==========================================
-  HmacSecret:
+  HmacSecretV2:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: /qr-attendance/hmac-key
       Description: "Secret key for generating and validating QR HMAC tokens"
       GenerateSecretString:
         PasswordLength: 32
@@ -370,7 +369,7 @@ Resources:
       Handler: qrGeneratorIndex.handler
       Environment:
         Variables:
-          HMAC_SECRET_ARN: !Ref HmacSecret
+          HMAC_SECRET_ARN: !Ref HmacSecretV2
           SESSIONS_TABLE: !Ref SessionsTable
           QR_TOKENS_TABLE: !Ref QrTokensTable
       Policies:
@@ -383,7 +382,7 @@ Resources:
             - Effect: Allow
               Action:
                 - secretsmanager:GetSecretValue
-              Resource: "*"
+              Resource: !Ref HmacSecretV2
       Events:
         GenerateQR:
           Type: HttpApi
