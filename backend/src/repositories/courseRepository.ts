@@ -19,7 +19,7 @@ export const getCourse = async (courseId: string): Promise<CourseItem | null> =>
     TableName: COURSES_TABLE,
     Key: { courseId },
   }));
-  return (result.Item as CourseItem) || null;
+  return (result?.Item as CourseItem) || null;
 };
 
 export const listCoursesByTeacher = async (teacherId: string): Promise<CourseItem[]> => {

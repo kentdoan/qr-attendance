@@ -46,7 +46,7 @@ describe('Session Lambda Handler', () => {
 
       expect(response.statusCode).toBe(200); 
 
-      const responseBody = JSON.parse(response.body!);
+      const body = JSON.parse(response.body!);
       expect(body.total).toBe(2);
       expect(body.sessions).toHaveLength(2);
       expect(body.sessions[0].className).toBe("CO3335_CC01");
@@ -54,7 +54,7 @@ describe('Session Lambda Handler', () => {
       expect(body.sessions[0].teacherId).toBe("god-Nguyen-Hua-Phung");
       expect(body.sessions[1].teacherId).toBe("god-Nguyen-Hua-Phung"); 
 
-  });
+    });
 
     it("should return an empty list when teacher has no sessions", async () => {
       ddbMock.on(QueryCommand).resolves({
@@ -87,15 +87,24 @@ describe('Session Lambda Handler', () => {
         expect(response.statusCode).toBe(403);
         expect(JSON.parse(response.body!).message).toBe("Forbidden: Caller is not a TEACHER");
     });
+  });
 
   describe('handleCreateSession (POST /sessions)', () => {
     it('should create a session and return 201 when payload is valid', async () => {
+      ddbMock.on(GetCommand).resolves({
+        Item: {
+          courseId: 'course-123',
+          teacherId: 'test-teacher-id',
+          courseName: 'CS101',
+          courseCode: 'CS101'
+        }
+      });
       ddbMock.on(PutCommand).resolves({});
 
       const event = createMockEvent({
         method: 'POST',
         path: '/sessions',
-        body: JSON.stringify({ className: 'CS101', duration: 90 }),
+        body: JSON.stringify({ courseId: 'course-123', className: 'CS101', duration: 90 }),
       });
 
       const response = await handleCreateSession(event);
@@ -113,7 +122,7 @@ describe('Session Lambda Handler', () => {
       const event = createMockEvent({
         method: 'POST',
         path: '/sessions',
-        body: JSON.stringify({ className: 'CS101', duration: 1 }), // duration too small
+        body: JSON.stringify({ courseId: 'course-123', className: 'CS101', duration: 0 }), // duration too small
       });
 
       const response = await handleCreateSession(event);
@@ -126,7 +135,7 @@ describe('Session Lambda Handler', () => {
       const event = createMockEvent({
         method: 'POST',
         path: '/sessions',
-        body: JSON.stringify({ className: 'CS101', duration: 90 }),
+        body: JSON.stringify({ courseId: 'course-123', className: 'CS101', duration: 90 }),
         groups: ['STUDENT'], // Not a teacher
       });
 

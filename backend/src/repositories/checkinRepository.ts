@@ -26,7 +26,7 @@ export const getQrToken = async (token: string): Promise<QrTokenItem | null> => 
     })
   );
 
-  return (response.Item as QrTokenItem) || null;
+  return (response?.Item as QrTokenItem) || null;
 };
 
 export const deleteQrToken = async (token: string): Promise<void> => {
@@ -50,7 +50,7 @@ export const checkAttendanceExist = async (sessionId: string, studentId: string)
     })
   );
 
-  return !!response.Item;
+  return !!response?.Item;
 };
 
 export const saveAttendance = async (attendance: AttendanceItem): Promise<void> => {
