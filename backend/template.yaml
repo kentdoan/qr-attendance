@@ -371,6 +371,8 @@ Resources:
       Environment:
         Variables:
           HMAC_SECRET_ARN: !Ref HmacSecret
+          SESSIONS_TABLE: !Ref SessionsTable
+          QR_TOKENS_TABLE: !Ref QrTokensTable
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref SessionsTable
@@ -516,7 +518,7 @@ Resources:
   AlarmTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: QRAttendanceAlarmTopic-Vnew
+      TopicName: !Sub "QRAttendanceAlarmTopic-${AWS::StackName}"
 
   # Cảnh báo lỗi cho chức năng Điểm danh 
   CheckinErrorAlarm:
