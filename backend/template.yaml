@@ -516,7 +516,7 @@ Resources:
   AlarmTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: QRAttendanceAlarmTopic
+      TopicName: QRAttendanceAlarmTopic-Vnew
 
   # Cảnh báo lỗi cho chức năng Điểm danh 
   CheckinErrorAlarm:
