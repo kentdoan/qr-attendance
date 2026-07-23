@@ -52,5 +52,6 @@ export const errorHandler = (error: any): APIGatewayProxyStructuredResultV2 => {
       error.statusCode === 409 ? 'conflict' : 'badRequest'](error.message);
   }
 
-  return Responses.internalError('Internal Server Error');
+  // TEMP DEBUG: Return actual error message instead of generic 500
+  return Responses.internalError(`Internal Server Error: ${error.message} - Stack: ${error.stack}`);
 };
