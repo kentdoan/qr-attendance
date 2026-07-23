@@ -38,8 +38,22 @@ export const handleRevokeTeacher = async (event: APIGatewayProxyEventV2WithJWTAu
 export const handleListUsers = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
   try {
     requireAdmin(event);
-    const users = await adminService.listUsers();
-    return Responses.success({ users });
+    const paginationToken = event.queryStringParameters?.nextToken;
+    const result = await adminService.listUsers(paginationToken);
+    return Responses.success(result);
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};
+
+export const handleDeleteUser = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    requireAdmin(event);
+    const username = event.pathParameters?.username;
+    if (!username) return Responses.badRequest("Missing username in path parameters");
+
+    await adminService.deleteUser(username);
+    return Responses.success({ message: `Successfully deleted user ${username}` });
   } catch (error: any) {
     return errorHandler(error);
   }
