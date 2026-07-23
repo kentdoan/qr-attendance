@@ -8,7 +8,7 @@ import * as checkinService from '../services/checkinService';
 
 export const handleCheckin = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
   try {
-    const { id: studentId, name: studentName } = getStudentInfo(event);
+    const { id: studentId, name: studentName, school: studentSchool, faculty: studentFaculty, major: studentMajor } = getStudentInfo(event);
     
     if (!event.body) {
       return Responses.badRequest("Missing request body");
@@ -23,7 +23,16 @@ export const handleCheckin = async (event: APIGatewayProxyEventV2WithJWTAuthoriz
 
     const { token, sessionId, deviceFingerprint } = parsed.data;
 
-    const attendance = await checkinService.processCheckin(studentId, studentName, token, sessionId, deviceFingerprint);
+    const attendance = await checkinService.processCheckin(
+        studentId, 
+        studentName, 
+        studentSchool,
+        studentFaculty,
+        studentMajor,
+        token, 
+        sessionId, 
+        deviceFingerprint
+    );
     return Responses.success({
         message: "Check-in successful",
         attendance,

@@ -1,10 +1,6 @@
-// ============================================================================
-// useFingerprint — lấy Device Fingerprint bằng @fingerprintjs/fingerprintjs.
-// ============================================================================
 import { useEffect, useState } from "react";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
-/** Trả về visitorId (device fingerprint) hoặc null khi đang tải. */
 export function useFingerprint() {
   const [fingerprint, setFingerprint] = useState(null);
 

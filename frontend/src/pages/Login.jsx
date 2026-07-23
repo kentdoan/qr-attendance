@@ -1,6 +1,3 @@
-// ============================================================================
-// Login page — form đăng nhập (Tailwind CSS)
-// ============================================================================
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -33,10 +30,16 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-slate-800">Đăng nhập</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Hệ thống Điểm danh QR động
+        <div className="mb-8 text-center">
+          <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white mb-4 shadow-lg shadow-blue-500/20 p-2 border border-slate-100">
+            <img src="/attend.svg" alt="BK-Check Logo" className="h-full w-full object-contain" />
+          </div>
+          <h1 className="text-3xl font-display font-bold text-slate-800 tracking-tight">
+            BK-Sync
+          </h1>
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Điểm danh chớp nhoáng, tối ưu thời gian.
+            <br /> Vui lòng đăng nhập để tiếp tục!
           </p>
         </div>
 
@@ -62,9 +65,17 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
-              Mật khẩu
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-slate-700">
+                Mật khẩu
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-indigo-600 hover:underline"
+              >
+                Quên mật khẩu?
+              </Link>
+            </div>
             <input
               type="password"
               required

@@ -45,3 +45,16 @@ export const handleListUsers = async (event: APIGatewayProxyEventV2WithJWTAuthor
     return errorHandler(error);
   }
 };
+
+export const handleDeleteUser = async (event: APIGatewayProxyEventV2WithJWTAuthorizer) => {
+  try {
+    requireAdmin(event);
+    const username = event.pathParameters?.username;
+    if (!username) return Responses.badRequest("Missing username in path parameters");
+
+    await adminService.deleteUser(username);
+    return Responses.success({ message: `Successfully deleted user ${username}` });
+  } catch (error: any) {
+    return errorHandler(error);
+  }
+};

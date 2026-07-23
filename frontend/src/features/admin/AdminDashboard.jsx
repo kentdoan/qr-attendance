@@ -1,6 +1,3 @@
-// ============================================================================
-// ADMIN — Quản lý người dùng: cấp / thu hồi quyền Giảng viên.
-// ============================================================================
 import { useCallback, useEffect, useState } from "react";
 import DashboardLayout from "../../components/DashboardLayout";
 import { adminApi } from "../../api/admin";
@@ -43,6 +40,20 @@ export default function AdminDashboard() {
     const res = await adminApi.revokeTeacher(user);
     if (res.success && res.data) {
       setUsers((prev) => prev.map((u) => (u.id === user.id ? res.data : u)));
+    }
+    setBusyId(null);
+  }
+
+  async function handleDelete(user) {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa người dùng ${user.fullName} (${user.email}) vĩnh viễn không?`)) {
+      return;
+    }
+    setBusyId(user.id);
+    const res = await adminApi.deleteUser(user.id);
+    if (res.success) {
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    } else {
+      alert(`Lỗi: ${res.message}`);
     }
     setBusyId(null);
   }
@@ -114,22 +125,33 @@ export default function AdminDashboard() {
                     <td className="px-3 py-2 text-right">
                       {u.role === "ADMIN" ? (
                         <span className="text-xs text-slate-400">—</span>
-                      ) : u.role === "TEACHER" ? (
-                        <button
-                          disabled={busyId === u.id}
-                          onClick={() => void revoke(u)}
-                          className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
-                        >
-                          Thu hồi quyền GV
-                        </button>
                       ) : (
-                        <button
-                          disabled={busyId === u.id}
-                          onClick={() => void grant(u)}
-                          className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
-                        >
-                          Cấp quyền GV
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          {u.role === "TEACHER" ? (
+                            <button
+                              disabled={busyId === u.id}
+                              onClick={() => void revoke(u)}
+                              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                            >
+                              Thu hồi quyền GV
+                            </button>
+                          ) : (
+                            <button
+                              disabled={busyId === u.id}
+                              onClick={() => void grant(u)}
+                              className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+                            >
+                              Cấp quyền GV
+                            </button>
+                          )}
+                          <button
+                            disabled={busyId === u.id}
+                            onClick={() => void handleDelete(u)}
+                            className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-600 hover:text-white disabled:opacity-50 transition-colors"
+                          >
+                            Xóa
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

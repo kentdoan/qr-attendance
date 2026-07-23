@@ -1,7 +1,3 @@
-// ============================================================================
-// AuthContext — quản lý trạng thái xác thực
-// Hỗ trợ Cognito thật: aws-amplify/auth (signIn, signUp, signOut...).
-// ============================================================================
 import {
   createContext,
   useCallback,
@@ -17,11 +13,14 @@ import {
   getCurrentUser,
   fetchAuthSession,
   fetchUserAttributes,
+  confirmSignUp,
+  resetPassword,
+  confirmResetPassword,
+  updateUserAttributes,
 } from "aws-amplify/auth";
 
 const AuthContext = createContext(undefined);
 
-/** Trích role từ token Cognito: ưu tiên cognito:groups vì backend dựa vào đó. */
 function roleFromClaims(claims) {
   const groups = claims["cognito:groups"];
   if (Array.isArray(groups)) {
@@ -29,7 +28,6 @@ function roleFromClaims(claims) {
     if (groups.includes("TEACHER")) return "TEACHER";
   }
   
-  // Fallback sang custom:role nếu chưa có group (ví dụ lúc vừa đăng ký)
   const custom = claims["custom:role"];
   if (custom === "STUDENT" || custom === "TEACHER" || custom === "ADMIN") {
     return custom;
@@ -42,25 +40,28 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadCognitoUser = useCallback(async () => {
+  const loadCognitoUser = useCallback(async (forceRefresh = false) => {
     const current = await getCurrentUser();
-    const session = await fetchAuthSession();
+    const session = await fetchAuthSession({ forceRefresh });
     const claims = session.tokens?.idToken?.payload ?? {};
     const attrs = await fetchUserAttributes().catch(() => ({}));
     return {
       id: current.userId,
       email: attrs.email ?? current.signInDetails?.loginId ?? "",
       fullName: attrs.name ?? attrs.email ?? current.username,
+      school: attrs["custom:school"] ?? "",
+      faculty: attrs["custom:faculty"] ?? "",
+      major: attrs["custom:major"] ?? "",
       role: roleFromClaims(claims),
       isActive: true,
       createdAt: new Date().toISOString(),
     };
   }, []);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (force = false) => {
     setLoading(true);
     try {
-      setUser(await loadCognitoUser());
+      setUser(await loadCognitoUser(force));
     } catch {
       setUser(null);
     } finally {
@@ -97,11 +98,40 @@ export function AuthProvider({ children }) {
         userAttributes: {
           email,
           name: fullName,
-          "custom:role": "STUDENT",
         },
       },
     });
   }, []);
+
+  const confirmRegister = useCallback(async ({ email, code }) => {
+    await confirmSignUp({
+      username: email,
+      confirmationCode: code,
+    });
+  }, []);
+
+  const forgotPassword = useCallback(async (email) => {
+    await resetPassword({ username: email });
+  }, []);
+
+  const confirmForgotPassword = useCallback(async ({ email, code, newPassword }) => {
+    await confirmResetPassword({
+      username: email,
+      confirmationCode: code,
+      newPassword,
+    });
+  }, []);
+
+  const updateProfile = useCallback(async (data) => {
+    const userAttributes = {};
+    if (data.fullName !== undefined) userAttributes.name = data.fullName;
+    if (data.school !== undefined) userAttributes["custom:school"] = data.school;
+    if (data.faculty !== undefined) userAttributes["custom:faculty"] = data.faculty;
+    if (data.major !== undefined) userAttributes["custom:major"] = data.major;
+
+    await updateUserAttributes({ userAttributes });
+    await refresh(true); // Buộc tải lại session để nhận JWT token mới với thông tin vừa cập nhật
+  }, [refresh]);
 
   const logout = useCallback(async () => {
     await signOut();
@@ -115,16 +145,19 @@ export function AuthProvider({ children }) {
       isAuthenticated: !!user,
       login,
       register,
+      confirmRegister,
+      forgotPassword,
+      confirmForgotPassword,
+      updateProfile,
       logout,
       refresh,
     }),
-    [user, loading, login, register, logout, refresh],
+    [user, loading, login, register, confirmRegister, forgotPassword, confirmForgotPassword, updateProfile, logout, refresh],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/** Hook truy cập AuthContext. */
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth phải được dùng bên trong <AuthProvider>.");

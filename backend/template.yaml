@@ -14,11 +14,32 @@ Globals:
         SESSIONS_TABLE: !Ref SessionsTable
         QR_TOKENS_TABLE: !Ref QrTokensTable
         ATTENDANCE_TABLE: !Ref AttendanceTable
+        COURSES_TABLE: !Ref CoursesTable
 
 Resources:
   # ==========================================
   # 1. DynamoDB Tables
   # ==========================================
+  CoursesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: courseId
+          AttributeType: S
+        - AttributeName: teacherId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: courseId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TeacherIdIndex
+          KeySchema:
+            - AttributeName: teacherId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
   SessionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -117,6 +138,18 @@ Resources:
           AttributeDataType: String
           Mutable: true
           Required: false
+        - Name: school
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: faculty
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: major
+          AttributeDataType: String
+          Mutable: true
+          Required: false
 
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -130,10 +163,16 @@ Resources:
       WriteAttributes:
         - email
         - name
+        - custom:school
+        - custom:faculty
+        - custom:major
       ReadAttributes:
         - email
         - name
         - custom:role
+        - custom:school
+        - custom:faculty
+        - custom:major
 
   AdminGroup:
     Type: AWS::Cognito::UserPoolGroup
@@ -178,25 +217,30 @@ Resources:
             IdentitySource: "$request.header.Authorization"
       # Giới hạn mặc định cho toàn bộ API
       DefaultRouteSettings:
-        ThrottlingBurstLimit: 50   # Số request tối đa được xử lý đồng thời trong 1 burst
-        ThrottlingRateLimit: 30    # Số request/giây tối đa cho toàn bộ API
-      # Giới hạn riêng cho từng route nhạy cảm
+        ThrottlingBurstLimit: 50   
+        ThrottlingRateLimit: 30    
       RouteSettings:
         "POST /checkin":
           ThrottlingBurstLimit: 20
-          ThrottlingRateLimit: 10  # Giới hạn chặt nhất: route dễ bị spam nhất
+          ThrottlingRateLimit: 10  
         "GET /sessions/{sessionId}/qr":
           ThrottlingBurstLimit: 30
-          ThrottlingRateLimit: 20  # Giáo viên lấy QR mỗi 30s, không cần cao
+          ThrottlingRateLimit: 20  
         "POST /sessions":
           ThrottlingBurstLimit: 10
-          ThrottlingRateLimit: 5   # Tạo session: ít dùng
+          ThrottlingRateLimit: 5   
         "POST /admin/assign-teacher":
           ThrottlingBurstLimit: 5
-          ThrottlingRateLimit: 3   # Admin routes: ít dùng, giới hạn chặt
+          ThrottlingRateLimit: 3   
         "POST /admin/revoke-teacher":
           ThrottlingBurstLimit: 5
           ThrottlingRateLimit: 3
+        "POST /courses":
+          ThrottlingBurstLimit: 10
+          ThrottlingRateLimit: 5
+        "GET /courses":
+          ThrottlingBurstLimit: 10
+          ThrottlingRateLimit: 5
 
   # ==========================================
   # 5. Lambda Functions
@@ -230,6 +274,43 @@ Resources:
         EntryPoints: 
         - src/indexes/authIndex.ts
 
+  # 5.1.1 Course Function
+  CourseFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: courseIndex.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CoursesTable
+      Events:
+        CreateCourse:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /courses
+            Method: POST
+        GetCourses:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /courses
+            Method: GET
+        DeleteCourse:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /courses/{courseId}
+            Method: DELETE
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        EntryPoints: 
+        - src/indexes/courseIndex.ts
+
   # 5.2 Session Function
   SessionFunction:
     Type: AWS::Serverless::Function
@@ -239,6 +320,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref SessionsTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref CoursesTable
       Events:
         CreateSession:
           Type: HttpApi
@@ -390,6 +473,8 @@ Resources:
                 - cognito-idp:AdminRemoveUserFromGroup
                 - cognito-idp:AdminUpdateUserAttributes
                 - cognito-idp:ListUsers
+                - cognito-idp:AdminDeleteUser
+                - cognito-idp:AdminListGroupsForUser
               Resource: !GetAtt UserPool.Arn
       Events:
         AssignTeacher:
@@ -410,6 +495,12 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /admin/users
             Method: GET
+        DeleteUser:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /admin/users/{username}
+            Method: DELETE
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -418,6 +509,50 @@ Resources:
         Sourcemap: true
         EntryPoints: 
         - src/indexes/adminIndex.ts
+
+  # ==========================================
+  # 6. CloudWatch Alarms
+  # ==========================================
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: QRAttendanceAlarmTopic
+
+  # Cảnh báo lỗi cho chức năng Điểm danh 
+  CheckinErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Cảnh báo nếu CheckinFunction có từ 5 lỗi trở lên trong 1 phút"
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CheckinFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  # Cảnh báo lỗi cho chức năng Tạo/Lấy phiên
+  SessionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: "Cảnh báo nếu SessionFunction có từ 5 lỗi trở lên trong 1 phút"
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SessionFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
 
 Outputs:
   ApiEndpoint:

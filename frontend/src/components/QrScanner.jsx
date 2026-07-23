@@ -1,6 +1,3 @@
-// ============================================================================
-// QrScanner — bọc html5-qrcode để quét QR bằng camera thiết bị.
-// ============================================================================
 import { useEffect, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
@@ -8,7 +5,6 @@ const REGION_ID = "qr-reader-region";
 
 export default function QrScanner({ onScan, onError, paused = false }) {
   const scannerRef = useRef(null);
-  // Giữ callback mới nhất mà không phải khởi tạo lại scanner.
   const onScanRef = useRef(onScan);
   const pausedRef = useRef(paused);
   onScanRef.current = onScan;
@@ -51,7 +47,6 @@ export default function QrScanner({ onScan, onError, paused = false }) {
           .catch(() => {});
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 import { errorHandler } from '../shared/errors';
 import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
-import { handleAssignTeacher, handleRevokeTeacher, handleListUsers } from '../handlers/adminHandler';
+import { handleAssignTeacher, handleRevokeTeacher, handleListUsers, handleDeleteUser } from '../handlers/adminHandler';
 import { Responses } from '../shared/response';
 
 export const handler = async (
@@ -18,6 +18,9 @@ export const handler = async (
     }
     if (method === 'GET' && path === '/admin/users') {
       return await handleListUsers(event);
+    }
+    if (method === 'DELETE' && path.startsWith('/admin/users/')) {
+      return await handleDeleteUser(event);
     }
 
     return Responses.notFound('Route Not Found');
