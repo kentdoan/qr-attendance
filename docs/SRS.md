@@ -6,6 +6,7 @@
 |----|--------------|
 | FR-01 | Hệ thống cho phép người dùng tự đăng ký tài khoản bằng email |
 | FR-02 | Hệ thống xác thực người dùng bằng email và mật khẩu, trả về JWT token |
+| FR-02.1 | Hệ thống tự động gửi lại mã OTP và yêu cầu xác thực nếu người dùng đăng nhập bằng tài khoản chưa xác minh |
 | FR-03 | Hệ thống phân quyền người dùng theo nhóm: `STUDENT`, `TEACHER`, `ADMIN` |
 | FR-04 | Giảng viên có thể tạo, đóng và xóa phiên điểm danh (session) |
 | FR-05 | Hệ thống sinh QR Code động, token thay đổi mỗi 30–60 giây |
@@ -29,7 +30,7 @@
 | Mã | Use Case | Mô tả | Điều kiện tiên quyết | Kết quả | FR liên quan |
 |----|----------|-------|----------------------|---------|-------------|
 | UC-T01 | Đăng ký tài khoản | Giảng viên tạo tài khoản mới | Chưa có tài khoản | Tài khoản tạo với quyền `STUDENT`; Admin nâng lên `TEACHER` | FR-01, FR-03 |
-| UC-T02 | Đăng nhập | Giảng viên đăng nhập bằng email + mật khẩu | Đã có tài khoản `TEACHER` | Nhận JWT token | FR-02 |
+| UC-T02 | Đăng nhập | Giảng viên đăng nhập bằng email + mật khẩu | Đã có tài khoản `TEACHER` | Nhận JWT token hoặc chuyển sang nhập OTP nếu chưa xác thực | FR-02, FR-02.1 |
 | UC-T03 | Tạo phiên điểm danh | Giảng viên tạo session mới (tùy chỉnh thời lượng 1 - 180 phút) | Đã đăng nhập (TEACHER) | Nhận `sessionId`, trạng thái `ACTIVE` | FR-04, FR-12 |
 | UC-T04 | Lấy QR Code | Giảng viên lấy QR Code mới nhất để chiếu lên bảng | Session đang `ACTIVE` | Nhận token ngắn hạn (30–60s) | FR-05 |
 | UC-T05 | Đóng phiên điểm danh | Giảng viên kết thúc buổi điểm danh | Session đang `ACTIVE` | Session chuyển `CLOSED`, dừng sinh QR | FR-04 |
@@ -51,7 +52,7 @@ graph LR
 
     subgraph Tài khoản
         UC_T01(["UC-T01: Đăng ký"])
-        UC_T02(["UC-T02: Đăng nhập"])
+        UC_T02(["UC-T02: Đăng nhập (hoặc Xác thực)"])
         UC_T11(["UC-T11: Quên mật khẩu"])
         UC_T10(["UC-T10: Cập nhật hồ sơ"])
     end
@@ -98,7 +99,7 @@ graph LR
 | Mã | Use Case | Mô tả | Điều kiện tiên quyết | Kết quả | FR liên quan |
 |----|----------|-------|----------------------|---------|-------------|
 | UC-S01 | Đăng ký tài khoản | Sinh viên tạo tài khoản mới | Chưa có tài khoản | Tài khoản được tạo với quyền `STUDENT` | FR-01, FR-03 |
-| UC-S02 | Đăng nhập | Sinh viên đăng nhập bằng email + mật khẩu | Đã có tài khoản | Nhận JWT token | FR-02 |
+| UC-S02 | Đăng nhập | Sinh viên đăng nhập bằng email + mật khẩu | Đã có tài khoản | Nhận JWT token hoặc chuyển sang nhập OTP nếu chưa xác thực | FR-02, FR-02.1 |
 | UC-S03 | Quét QR và điểm danh | Sinh viên quét QR Code đang chiếu → hệ thống gửi token lên API | Đã đăng nhập, session `ACTIVE`, token hợp lệ | Điểm danh thành công | FR-07, FR-06, FR-08 |
 | UC-S04 | Xem lịch sử điểm danh | Sinh viên xem các buổi mình đã điểm danh | Đã đăng nhập | Danh sách lịch sử cá nhân | FR-09 |
 | UC-S05 | Cập nhật hồ sơ | Sinh viên cập nhật trường, khoa, chuyên ngành | Đã đăng nhập | Hồ sơ cá nhân được lưu lại | FR-16 |
@@ -112,7 +113,7 @@ graph LR
 
     subgraph Tài khoản
         UC_S01(["UC-S01: Đăng ký"])
-        UC_S02(["UC-S02: Đăng nhập"])
+        UC_S02(["UC-S02: Đăng nhập (hoặc Xác thực)"])
         UC_S06(["UC-S06: Quên mật khẩu"])
         UC_S05(["UC-S05: Cập nhật hồ sơ"])
     end
@@ -219,6 +220,11 @@ sequenceDiagram
     alt Thành công
         Cognito-->>FE: JWT Token (idToken, accessToken, refreshToken)
         FE-->>User: Đăng nhập thành công, chuyển hướng trang chủ
+    else Chưa xác thực (UNCONFIRMED)
+        Cognito-->>FE: 400 UserNotConfirmedException
+        FE->>Cognito: ResendConfirmationCode(email)
+        Cognito-->>FE: OK
+        FE-->>User: Tự động chuyển trang nhập OTP
     else Sai thông tin
         Cognito-->>FE: 400 NotAuthorizedException
         FE-->>User: Sai email hoặc mật khẩu
