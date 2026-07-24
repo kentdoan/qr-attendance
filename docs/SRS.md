@@ -13,7 +13,7 @@
 | FR-06 | Mỗi QR token chỉ sử dụng được một lần duy nhất |
 | FR-07 | Sinh viên điểm danh bằng cách quét QR Code |
 | FR-08 | Hệ thống ngăn chặn điểm danh 2 lần trong cùng một phiên |
-| FR-09 | Giảng viên xem và xuất báo cáo điểm danh ra file Excel (bao gồm thông tin sinh viên, thời gian, trường, khoa, ngành) |
+| FR-09 | Giảng viên xem và xuất báo cáo điểm danh ra file Excel (bao gồm họ tên, email, thời gian, trường, khoa, ngành, mã thiết bị và cảnh báo trùng lặp thiết bị) |
 | FR-10 | Admin xem danh sách toàn bộ tài khoản trong hệ thống |
 | FR-11 | Admin cấp và thu hồi quyền Giảng viên (`TEACHER`) cho tài khoản bất kỳ |
 | FR-12 | Giảng viên có thể thiết lập thời gian hẹn giờ (1 - 180 phút) để tự động đóng phiên điểm danh |

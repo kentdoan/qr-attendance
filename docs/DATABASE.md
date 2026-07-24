@@ -62,6 +62,7 @@
 |-----------|------|---------|
 | `sessionId` | String (PK) | Partition key |
 | `studentId` | String (SK) | Sort key — kết hợp PK+SK đảm bảo unique per session |
+| `studentEmail` | String | Email của sinh viên (lấy từ Cognito) |
 | `studentName` | String | Tên hiển thị của sinh viên (lấy từ Cognito) |
 | `studentSchool` | String | Trường của sinh viên |
 | `studentFaculty` | String | Khoa của sinh viên |

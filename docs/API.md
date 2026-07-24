@@ -202,6 +202,7 @@
     "attendance": {
       "sessionId": "uuid",
       "studentId": "string",
+      "studentEmail": "string",
       "studentName": "string",
       "studentSchool": "string",
       "studentFaculty": "string",
@@ -262,6 +263,7 @@
     "attendees": [
       {
         "studentId": "string",
+        "studentEmail": "string",
         "studentName": "string",
         "studentSchool": "string",
         "studentFaculty": "string",
