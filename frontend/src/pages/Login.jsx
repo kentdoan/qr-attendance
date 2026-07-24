@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { resendSignUpCode } from "aws-amplify/auth";
 
 export default function Login() {
   const { login } = useAuth();
@@ -18,7 +19,18 @@ export default function Login() {
     setError(null);
     setSubmitting(true);
     try {
-      await login({ email, password });
+      const res = await login({ email, password });
+      if (res?.nextStep === "CONFIRM_SIGN_UP") {
+        await resendSignUpCode({ username: email });
+        navigate("/register", { 
+          state: { 
+            step: "confirm", 
+            email,
+            message: "Tài khoản chưa được xác thực. Mã xác thực mới đã được gửi đến email của bạn." 
+          } 
+        });
+        return;
+      }
       navigate(from ?? "/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Đăng nhập thất bại");

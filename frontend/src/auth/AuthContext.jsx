@@ -75,17 +75,27 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async ({ email, password }) => {
+      let result;
       try {
-        await signIn({ username: email, password });
+        result = await signIn({ username: email, password });
       } catch (err) {
+        if (err.name === "UserNotConfirmedException" || err.message?.includes("not confirmed")) {
+          return { nextStep: "CONFIRM_SIGN_UP" };
+        }
         if (err.name === "UserAlreadyAuthenticatedException" || err.message?.includes("already a signed in user")) {
           await signOut();
-          await signIn({ username: email, password });
+          result = await signIn({ username: email, password });
         } else {
           throw err;
         }
       }
+
+      if (result?.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+        return { nextStep: "CONFIRM_SIGN_UP" };
+      }
+
       setUser(await loadCognitoUser());
+      return { nextStep: "DONE" };
     },
     [loadCognitoUser],
   );

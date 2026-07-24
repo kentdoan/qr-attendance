@@ -1,21 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 export default function Register() {
   const { register, confirmRegister } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [step, setStep] = useState("register");
+  const [step, setStep] = useState(location.state?.step || "register");
   
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(location.state?.email || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [code, setCode] = useState("");
   
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [success, setSuccess] = useState(location.state?.message || null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleRegisterSubmit(e) {
