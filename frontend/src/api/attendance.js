@@ -89,6 +89,8 @@ export const attendanceApi = {
           studentSchool: a.studentSchool,
           studentFaculty: a.studentFaculty,
           studentMajor: a.studentMajor,
+          studentEmail: a.studentEmail,
+          deviceFingerprint: a.deviceFingerprint,
         }))
       };
       return { ...res, data: mapped };

@@ -37,14 +37,15 @@ export const getStudentId = (event: APIGatewayProxyEventV2WithJWTAuthorizer): st
   return requireGroup(event, 'STUDENT');
 };
 
-export const getStudentInfo = (event: APIGatewayProxyEventV2WithJWTAuthorizer): { id: string, name: string, school: string, faculty: string, major: string } => {
+export const getStudentInfo = (event: APIGatewayProxyEventV2WithJWTAuthorizer): { id: string, email: string, name: string, school: string, faculty: string, major: string } => {
   const id = requireGroup(event, 'STUDENT');
   const claims = getClaims(event);
+  const email = claims.email as string || '';
   const name = claims.name as string || 'Unknown';
   const school = claims['custom:school'] as string || '';
   const faculty = claims['custom:faculty'] as string || '';
   const major = claims['custom:major'] as string || '';
-  return { id, name, school, faculty, major };
+  return { id, email, name, school, faculty, major };
 };
 
 export const requireAdmin = (event: APIGatewayProxyEventV2WithJWTAuthorizer): string => {

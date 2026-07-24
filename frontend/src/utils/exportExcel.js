@@ -5,23 +5,48 @@ function safeFileName(name) {
 }
 
 export function exportReportToExcel(report, session) {
-  const rows = report.records.map((r, i) => ({
-    STT: i + 1,
-    "Họ tên": r.studentName || "Không xác định",
-    "Trường": r.studentSchool || "",
-    "Khoa": r.studentFaculty || "",
-    "Ngành": r.studentMajor || "",
-    "Thời gian điểm danh": new Date(r.checkinAt).toLocaleString("vi-VN"),
-  }));
+  const deviceMap = {};
+  for (const r of report.records) {
+    if (!r.deviceFingerprint) continue;
+    if (!deviceMap[r.deviceFingerprint]) deviceMap[r.deviceFingerprint] = [];
+    deviceMap[r.deviceFingerprint].push(r);
+  }
+
+  const rows = report.records.map((r, i) => {
+    const others = [];
+    if (r.deviceFingerprint && deviceMap[r.deviceFingerprint]) {
+      const allUsers = deviceMap[r.deviceFingerprint];
+      for (const u of allUsers) {
+        if (u.id !== r.id) {
+           others.push(`${u.studentName || "Unknown"} (${u.studentEmail || "No Email"})`);
+        }
+      }
+    }
+    
+    return {
+      STT: i + 1,
+      "Họ tên": r.studentName || "Không xác định",
+      "Email": r.studentEmail || "",
+      "Trường": r.studentSchool || "",
+      "Khoa": r.studentFaculty || "",
+      "Ngành": r.studentMajor || "",
+      "Thời gian điểm danh": new Date(r.checkinAt).toLocaleString("vi-VN"),
+      "Mã thiết bị": r.deviceFingerprint || "",
+      "Cảnh báo trùng thiết bị": others.length > 0 ? others.join("\n") : ""
+    };
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(rows);
   worksheet["!cols"] = [
     { wch: 6 },  // STT
     { wch: 24 }, // Họ tên
+    { wch: 28 }, // Email
     { wch: 20 }, // Trường
     { wch: 20 }, // Khoa
     { wch: 20 }, // Ngành
     { wch: 22 }, // Thời gian
+    { wch: 24 }, // Mã thiết bị
+    { wch: 40 }, // Cảnh báo trùng thiết bị
   ];
 
   const workbook = XLSX.utils.book_new();

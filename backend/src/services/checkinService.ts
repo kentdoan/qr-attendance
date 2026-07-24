@@ -4,7 +4,8 @@ import { BadRequestError, ConflictError, NotFoundError } from '../shared/errors'
 import { AttendanceItem, SessionStatus } from '../shared/models';
 
 export const processCheckin = async (
-    studentId: string, 
+    studentId: string,
+    studentEmail: string,
     studentName: string, 
     studentSchool: string,
     studentFaculty: string,
@@ -44,6 +45,7 @@ export const processCheckin = async (
     const attendance: AttendanceItem = {
         sessionId,
         studentId,
+        studentEmail,
         studentName,
         studentSchool,
         studentFaculty,

@@ -36,6 +36,7 @@ export interface QrTokenItem {
 export interface AttendanceItem {
   sessionId: string;
   studentId: string;
+  studentEmail?: string;
   studentName?: string;
   studentSchool?: string;
   studentFaculty?: string;
@@ -55,6 +56,7 @@ export interface AttendanceItem {
 
 export interface AttendanceRecord {
   studentId: string;
+  studentEmail?: string;
   studentName?: string;
   studentSchool?: string;
   studentFaculty?: string;

@@ -19,6 +19,7 @@ export const getReport = async (sessionId: string, teacherId: string): Promise<R
     totalAttendees: attendanceRecords.length,
     attendees: attendanceRecords.map(record => ({
       studentId: record.studentId,
+      studentEmail: record.studentEmail,
       studentName: record.studentName,
       studentSchool: record.studentSchool,
       studentFaculty: record.studentFaculty,
