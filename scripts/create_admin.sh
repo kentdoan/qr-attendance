@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+
 echo "=========================================="
 echo "    Create QR Attendance Admin Account    "
 echo "=========================================="
