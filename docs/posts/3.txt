@@ -1,0 +1,107 @@
+Những bài học mình rút ra khi thiết kế hệ thống điểm danh QR theo kiến trúc Serverless trên AWS
+
+---
+
+Mở đầu
+
+Trước khi bắt đầu xây dựng hệ thống điểm danh bằng mã QR, mình chưa từng phát triển một ứng dụng theo kiến trúc Serverless. Phần lớn kiến thức trước đó của mình đều xoay quanh mô hình web truyền thống, nơi một máy chủ duy nhất chịu trách nhiệm xử lý toàn bộ nghiệp vụ và kết nối trực tiếp với cơ sở dữ liệu. Vì vậy, khi quyết định lựa chọn AWS Serverless cho workshop, mình xem đây vừa là cơ hội học hỏi công nghệ mới, vừa là thử thách trong việc thay đổi tư duy thiết kế hệ thống.
+
+Sau quá trình nghiên cứu tài liệu chính thức của AWS và từng bước xây dựng kiến trúc, mình nhận ra rằng việc thiết kế một hệ thống Serverless không đơn thuần là ghép các dịch vụ của AWS lại với nhau. Điều quan trọng hơn là hiểu vai trò của từng thành phần và cách chúng phối hợp để tạo nên một hệ thống có khả năng mở rộng, bảo trì và triển khai dễ dàng.
+
+---
+
+1. Không nên gom nhiều nhiệm vụ vào trong một Lambda
+
+Ban đầu, mình dự định xây dựng một Lambda duy nhất để xử lý toàn bộ chức năng của hệ thống như tạo buổi điểm danh, sinh mã QR, tiếp nhận yêu cầu điểm danh và xuất báo cáo. Cách làm này khá giống với việc xây dựng một Web API truyền thống.
+
+Tuy nhiên, sau khi tìm hiểu tài liệu AWS Lambda, mình nhận ra mỗi Lambda nên thực hiện "một nhiệm vụ cụ thể". Vì vậy, mình tách hệ thống thành nhiều Lambda như Session, QR Generator, Check-in, Report và Admin.
+
+Việc phân chia này giúp mã nguồn dễ bảo trì hơn, đồng thời mỗi Lambda có thể được triển khai hoặc mở rộng độc lập. Nếu sau này chức năng điểm danh có lưu lượng truy cập lớn hơn các chức năng khác, AWS chỉ cần mở rộng Lambda Check-in mà không ảnh hưởng đến toàn bộ hệ thống.
+
+---
+
+2. API Gateway không chỉ là nơi định nghĩa API
+
+Lúc mới học, mình nghĩ API Gateway chỉ có nhiệm vụ chuyển tiếp yêu cầu HTTP đến Lambda.
+
+Sau khi triển khai thực tế, mình nhận ra API Gateway còn đảm nhận nhiều chức năng quan trọng như xác thực JWT Token từ Amazon Cognito, định tuyến yêu cầu đến đúng Lambda, xử lý CORS và ghi nhật ký truy cập.
+
+Nhờ vậy, phần mã nguồn trong Lambda chỉ tập trung giải quyết nghiệp vụ. Điều này giúp hệ thống rõ ràng hơn và giảm đáng kể lượng mã xử lý chung phải lặp lại ở nhiều nơi.
+
+---
+
+3. Amazon Cognito giảm đáng kể gánh nặng về bảo mật
+
+Một trong những quyết định quan trọng nhất của mình là sử dụng Amazon Cognito thay vì tự xây dựng hệ thống đăng nhập.
+
+Ban đầu, mình từng nghĩ việc lưu tài khoản trong DynamoDB và tự kiểm tra mật khẩu bằng Lambda sẽ đơn giản hơn. Tuy nhiên, sau khi đọc tài liệu AWS, mình nhận ra xác thực người dùng là một lĩnh vực phức tạp, liên quan đến mã hóa mật khẩu, quản lý phiên đăng nhập và phát hành JWT Token.
+
+Bằng cách để Cognito đảm nhiệm toàn bộ quá trình xác thực, Lambda hoàn toàn không cần xử lý thông tin mật khẩu. Điều này vừa giúp hệ thống an toàn hơn, vừa giảm đáng kể lượng mã nguồn phải tự phát triển.
+
+---
+
+4. Thiết kế DynamoDB cần bắt đầu từ cách truy vấn dữ liệu
+
+Ban đầu, mình thiết kế DynamoDB giống như cơ sở dữ liệu quan hệ, chỉ tập trung vào việc lưu trữ dữ liệu. Tuy nhiên, trong tài liệu của AWS, DynamoDB được khuyến nghị thiết kế dựa trên "Access Pattern", tức là dựa trên cách dữ liệu sẽ được truy vấn.
+
+Ví dụ, hệ thống cần lấy danh sách các buổi điểm danh theo giảng viên. Nếu sử dụng Scan trên toàn bộ bảng Sessions, hiệu năng sẽ giảm khi dữ liệu tăng lên. Vì vậy, mình bổ sung "Global Secondary Index (GSI)" theo mã ID của người tạo (tạm gọi là "accountId") để có thể sử dụng Query thay vì Scan.
+
+Qua ví dụ này, mình nhận ra rằng với DynamoDB, cách truy vấn dữ liệu cần được xác định ngay từ giai đoạn thiết kế chứ không phải sau khi hoàn thành cơ sở dữ liệu.
+
+---
+
+5. Secrets Manager giúp tách thông tin nhạy cảm khỏi mã nguồn
+
+Trong hệ thống điểm danh QR, mình sử dụng khóa bí mật để tạo và xác thực mã QR.
+
+Ban đầu, mình dự định lưu khóa này trực tiếp trong mã nguồn dưới dạng biến cấu hình. Tuy nhiên, đây là cách làm không an toàn vì khóa bí mật có thể vô tình bị đưa lên hệ thống quản lý mã nguồn.
+
+Sau khi tìm hiểu AWS Secrets Manager, mình chuyển toàn bộ thông tin nhạy cảm sang dịch vụ này. Lambda chỉ đọc khóa khi cần thông qua quyền truy cập IAM.
+
+Điều này giúp mã nguồn trở nên an toàn hơn và thuận tiện khi cần thay đổi khóa mà không phải chỉnh sửa chương trình.
+
+---
+
+6. AWS SAM giúp kiến trúc trở nên rõ ràng hơn
+
+Trước khi sử dụng AWS SAM, mình nghĩ "template.yaml" chỉ là một tệp cấu hình để triển khai.
+
+Trong quá trình phát triển dự án, mình nhận ra đây thực chất là bản mô tả toàn bộ hệ thống. Chỉ cần mở "template.yaml", mình có thể biết hệ thống sử dụng bao nhiêu Lambda, có những bảng DynamoDB nào, API Gateway được cấu hình ra sao, và các quyền IAM được cấp như thế nào.
+
+Điều này giúp việc quản lý dự án dễ dàng hơn rất nhiều so với việc cấu hình thủ công trên AWS Management Console.
+
+---
+
+7. Kiến trúc Serverless không chỉ giúp giảm công việc quản trị
+
+Trước đây, mình nghĩ lợi ích lớn nhất của Serverless là không cần quản lý máy chủ.
+
+Sau khi hoàn thành thiết kế hệ thống, mình nhận ra giá trị lớn hơn nằm ở việc mỗi dịch vụ trong AWS được xây dựng để đảm nhận một vai trò rất rõ ràng. Lambda xử lý nghiệp vụ, API Gateway tiếp nhận yêu cầu, Cognito xác thực người dùng, DynamoDB lưu trữ dữ liệu và Secrets Manager bảo vệ thông tin nhạy cảm.
+
+Sự phân tách này giúp hệ thống có cấu trúc rõ ràng hơn và mỗi thành phần đều có thể được phát triển hoặc thay thế mà ít ảnh hưởng đến các thành phần khác.
+
+---
+
+Kết luận
+
+Nhìn lại toàn bộ quá trình thực hiện dự án, điều mình học được không chỉ là cách sử dụng các dịch vụ của AWS mà còn là một phương pháp tư duy mới trong thiết kế hệ thống.
+
+Thay vì xây dựng một ứng dụng xoay quanh một máy chủ trung tâm, kiến trúc Serverless khuyến khích chia nhỏ hệ thống thành nhiều thành phần độc lập, mỗi thành phần đảm nhận một nhiệm vụ cụ thể và được AWS quản lý hoàn toàn về hạ tầng. Điều này giúp nhà phát triển tập trung nhiều hơn vào việc giải quyết bài toán nghiệp vụ thay vì dành thời gian cho việc quản trị hệ thống.
+
+Theo mình, giá trị lớn nhất của dự án không nằm ở việc sử dụng bao nhiêu dịch vụ AWS, mà ở quá trình từng bước hiểu được lý do vì sao mỗi dịch vụ được lựa chọn và cách chúng phối hợp với nhau để tạo thành một kiến trúc hoàn chỉnh. Đây cũng là bài học quan trọng nhất mình rút ra sau khi hoàn thành việc thiết kế hệ thống điểm danh QR bằng AWS Serverless.
+
+---
+
+Tài liệu tham khảo
+
+1. "What is AWS Lambda?". (https://docs.aws.amazon.com/lambda/latest/dg/welcome.html)
+2. "What is Amazon API Gateway?". (https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+3. "What is Amazon DynamoDB?". (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html)
+4. "Amazon Cognito user pools". (https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-pools.html)
+5. "What is AWS Secrets Manager?". (https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html)
+6. "AWS SAM template". (https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification.html)
+
+---
+
+#fcaj2026 #hk253co3335 #post3
+
