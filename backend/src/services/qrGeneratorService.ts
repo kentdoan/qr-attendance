@@ -20,6 +20,10 @@ export const generateQrToken = async (sessionId: string, teacherId: string): Pro
     throw new BadRequestError("Session is not active");
   }
 
+  if (new Date() > new Date(session.expiresAt)) {
+    throw new BadRequestError("Session is not active");
+  }
+
   // 2. Fetch HMAC Secret (Will be cached in memory by repository)
   const secretKey = await repo.getHmacSecret();
 

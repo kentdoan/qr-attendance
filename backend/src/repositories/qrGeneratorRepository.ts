@@ -30,7 +30,7 @@ export const getSession = async (sessionId: string): Promise<SessionItem | null>
     new GetCommand({
       TableName: sessionsTable,
       Key: { sessionId },
-      ProjectionExpression: 'sessionId, teacherId, #status',
+      ProjectionExpression: 'sessionId, teacherId, #status, expiresAt',
       ExpressionAttributeNames: {
         '#status': 'status',
       },

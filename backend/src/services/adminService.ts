@@ -1,5 +1,5 @@
-import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminUpdateUserAttributesCommand, AdminRemoveUserFromGroupCommand, ListUsersCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { BadRequestError } from '../shared/errors';
+import { CognitoIdentityProviderClient, AdminAddUserToGroupCommand, AdminUpdateUserAttributesCommand, AdminRemoveUserFromGroupCommand, ListUsersCommand, AdminDeleteUserCommand, AdminListGroupsForUserCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../shared/errors';
 import { Logger } from '../shared/logger';
 
 const cognitoClient = new CognitoIdentityProviderClient({});
@@ -62,14 +62,15 @@ export const revokeTeacher = async (username: string): Promise<void> => {
   }));
 };
 
-export const listUsers = async (): Promise<any[]> => {
+export const listUsers = async (paginationToken?: string): Promise<{ users: any[], nextToken?: string }> => {
   const poolId = getPoolId();
   const response = await cognitoClient.send(new ListUsersCommand({
     UserPoolId: poolId,
     Limit: 50,
+    ...(paginationToken && { PaginationToken: paginationToken }),
   }));
   
-  return (response.Users || []).map(user => {
+  const users = (response.Users || []).map(user => {
     return {
       username: user.Username,
       status: user.UserStatus,
@@ -77,4 +78,34 @@ export const listUsers = async (): Promise<any[]> => {
       created: user.UserCreateDate,
     };
   });
+
+  return { users, nextToken: response.PaginationToken };
+};
+
+export const deleteUser = async (username: string): Promise<void> => {
+  const poolId = getPoolId();
+  
+  // Kiểm tra xem user có phải là ADMIN không
+  const groupsResponse = await cognitoClient.send(new AdminListGroupsForUserCommand({
+    UserPoolId: poolId,
+    Username: username,
+  }));
+  
+  const groups = groupsResponse.Groups?.map(g => g.GroupName) || [];
+  if (groups.includes('ADMIN')) {
+    throw new ForbiddenError('Cannot delete another admin');
+  }
+
+  // Xóa user
+  try {
+    await cognitoClient.send(new AdminDeleteUserCommand({
+      UserPoolId: poolId,
+      Username: username,
+    }));
+  } catch (err: any) {
+    if (err.name === 'UserNotFoundException') {
+      throw new NotFoundError('User not found');
+    }
+    throw err;
+  }
 };

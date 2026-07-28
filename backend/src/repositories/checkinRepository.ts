@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, PutCommand, DeleteCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { AttendanceItem, QrTokenItem } from '../shared/models';
 
 const ddbClient = new DynamoDBClient({});
@@ -26,7 +26,7 @@ export const getQrToken = async (token: string): Promise<QrTokenItem | null> => 
     })
   );
 
-  return (response.Item as QrTokenItem) || null;
+  return (response?.Item as QrTokenItem) || null;
 };
 
 export const deleteQrToken = async (token: string): Promise<void> => {
@@ -50,7 +50,7 @@ export const checkAttendanceExist = async (sessionId: string, studentId: string)
     })
   );
 
-  return !!response.Item;
+  return !!response?.Item;
 };
 
 export const saveAttendance = async (attendance: AttendanceItem): Promise<void> => {
@@ -62,4 +62,20 @@ export const saveAttendance = async (attendance: AttendanceItem): Promise<void> 
       Item: attendance,
     })
   );
+};
+
+export const listAttendanceByStudent = async (studentId: string): Promise<AttendanceItem[]> => {
+  const { attendanceTable } = getEnvVars();
+  const response = await docClient.send(
+    new QueryCommand({
+      TableName: attendanceTable,
+      IndexName: 'StudentIdIndex',
+      KeyConditionExpression: 'studentId = :studentId',
+      ExpressionAttributeValues: {
+        ':studentId': studentId,
+      },
+      ScanIndexForward: false, // get newest first
+    })
+  );
+  return (response.Items as AttendanceItem[]) || [];
 };

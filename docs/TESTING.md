@@ -12,7 +12,7 @@ Dự án này áp dụng phương pháp **Unit Test (Behavior-Driven)** sử d�
 ### Kịch bản (Test Cases) đã kiểm thử:
 - **[POST] Tạo Session (`handleCreateSession`)**:
   - `[PASS]` Gọi API với payload hợp lệ (Vd: `className`, `duration` chuẩn) -> Hệ thống trả về `200 OK` và dữ liệu Session có thuộc tính `sessionId`, `expiresAt`.
-  - `[PASS]` Gọi API với `duration` < 5 (Phi logic) -> Zod phải bắt lỗi và ném ra `400 Bad Request`.
+  - `[PASS]` Gọi API với `duration` < 1 (Phi logic) -> Zod phải bắt lỗi và ném ra `400 Bad Request`.
   - `[PASS]` Người gọi API không nằm trong nhóm `TEACHER` của Cognito -> Handler trả về `403 Forbidden` (không throw, không crash).
  
 - **[GET] Lấy danh sách các Session `TEACHER` đã tạo (`handleGetListSessions`)**:
@@ -73,7 +73,26 @@ Dự án này áp dụng phương pháp **Unit Test (Behavior-Driven)** sử d�
 
 ---
 
-## 5. `λ Auth` & `λ Admin` (Xác thực & Quản trị)
+## 5. `λ Course` (Quản lý môn học)
+
+### Mục tiêu kiểm thử
+Đảm bảo API Môn học (Courses) hoạt động đúng, cấm trùng lặp môn học của cùng một giảng viên, và bảo vệ chống xóa trái phép.
+
+### Kịch bản (Test Cases) đã kiểm thử:
+- **[POST] Tạo Môn học (`handleCreateCourse`)**:
+  - `[PASS]` **Happy Path**: Payload hợp lệ -> `201 Created`.
+  - `[PASS]` Thiếu request body -> `400 Bad Request`.
+  - `[PASS]` Tên môn học hoặc mã môn học đã bị trùng -> `409 Conflict`.
+- **[GET] Lấy Danh sách (`handleGetListCourses`)**:
+  - `[PASS]` Gọi API thành công -> Trả về mảng `courses` và `total` (200 OK).
+- **[DELETE] Xóa Môn học (`handleDeleteCourse`)**:
+  - `[PASS]` **Happy Path**: Giảng viên xóa môn học của mình -> `200 OK`.
+  - `[PASS]` Giảng viên cố xóa môn học của người khác -> `403 Forbidden: You do not own this course`.
+  - `[PASS]` Mã môn học không tồn tại -> `404 Not Found`.
+
+---
+
+## 6. `λ Auth` & `λ Admin` (Xác thực & Quản trị)
 
 ### Mục tiêu kiểm thử
 Đảm bảo luồng tự động cấp quyền STUDENT khi đăng ký tài khoản mới và hệ thống APIs Quản trị hoạt động nghiêm ngặt, cấm truy cập trái phép.
@@ -87,5 +106,3 @@ Dự án này áp dụng phương pháp **Unit Test (Behavior-Driven)** sử d�
   - `[PASS]` **[POST] `/admin/assign-teacher`**: Gọi **2 lệnh Cognito** (`AdminAddUserToGroup` + `AdminUpdateUserAttributes`) để cấp quyền `TEACHER` thành công.
   - `[PASS]` **[POST] `/admin/revoke-teacher`**: Gọi **2 lệnh Cognito** (`AdminRemoveUserFromGroup` + `AdminUpdateUserAttributes`) để tước quyền `TEACHER` thành công.
 
-
-> Để chạy bộ test này, chỉ cần mở terminal tại thư mục `backend` và chạy lệnh `npm test`. Bộ test gồm **25 test cases** trên **6 test suites**, hoàn thành trong khoảng 7-10 giây.

@@ -57,7 +57,7 @@ export const getSession = async (sessionId: string): Promise<SessionItem | null>
     })
   );
 
-  return (response.Item as SessionItem) || null;
+  return (response?.Item as SessionItem) || null;
 };
 
 export const updateSessionStatus = async (
