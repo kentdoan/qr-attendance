@@ -67,5 +67,5 @@ qr-attendance/
 
 Sơ đồ dưới đây mô phỏng kiến trúc Serverless trên AWS
 
-![architecture](./images/diagram3.png)
+![architecture](./images/diagram4.png)
 
